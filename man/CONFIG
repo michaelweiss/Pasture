@@ -1,3 +1,6 @@
+Note:
+You should be in the src/submission directory.
+
 Order in which files should be created or edited:
 
 1. Edit config.dat in data
@@ -5,7 +8,7 @@ Order in which files should be created or edited:
 3. Edit list of pc members
 4. Generate list of reviewers, and their roles
 5. Generate reviewer passwords
-6. Edit .htaccess file in europlop2011 
+6. Edit .htaccess file in europlop2012 
 7. Set permissions for all scripts to 755
 
 Initial set of files:
