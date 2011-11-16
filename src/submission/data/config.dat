@@ -1,7 +1,7 @@
-debug=0
+debug=1
 
 conference=EuroPLoP 2012
-url=http://www.hillside.net/europlop/europlop2012/submission
+url=http://www.hillside.net/europlop/europlop2012/_submission
 
 program_chair=Alice White
 program_chair_email=alice@example.com
