@@ -1,0 +1,36 @@
+Order in which files should be created or edited:
+
+1. Edit config.dat in data
+2. Edit html templates in data/html
+3. Edit list of pc members
+4. Generate list of reviewers, and their roles
+5. Generate reviewer passwords
+6. Edit .htaccess file in europlop2011 
+7. Set permissions for all scripts to 755
+
+Initial set of files:
+
+data/config.dat
+data/html/header.html
+data/html/footer.html
+data/password.dat
+data/reference.dat
+data/reviewers.dat
+data/roles.dat
+
+Tools:
+
+0. Prepare file: pc.txt
+purpose: list of PC members
+format: name, organization, country, email
+Prefix chair names with a *, as in: *Michael Weiss
+
+1. Run tool: make-reviewers.pl
+purpose: generate list of reviewers, and their roles
+input: pc.txt
+output: data/reviewers.dat
+
+2. Run tool: make-roles.pl
+purpose: generate list of reviewers, and their roles and passwords
+input: data/reviewers.dat
+output: data/roles.dat

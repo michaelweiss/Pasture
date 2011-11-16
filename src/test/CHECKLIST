@@ -1,0 +1,27 @@
+During the first set of tests, set debug=1
+
+1. Run gate.cgi -> permissions
+http://www.hillside.net/europlop/europlop2011/submission/gate.cgi
+Expect initial submission screen
+
+2. Recover forgotten password for a reviewer
+http://www.hillside.net/europlop/europlop2011/submission/gate.cgi?action=send_login
+Expect text of email with password
+DONE: Email did not get sent
+Had to set base url in config.dat to full url: 
+http://www.hillside.net/europlop/europlop2011/submission
+
+3. Log in as an administrator
+Expect menu with PC, Shepherd and Admin sections
+
+4. Submit a paper
+Expect entry screen for new submission
+Expect three tracks
+DONE: Uploading paper produces Need to login error
+
+5. Access uploaded paper through link in confirmation email
+Expect to download paper
+
+6. Log in as author
+Expect menu that includes Author section
+Expect link to update paper(s)
