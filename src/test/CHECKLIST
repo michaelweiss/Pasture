@@ -1,9 +1,9 @@
-During the first set of tests, set debug=1
+During the first set of tests, set debug=1 in data/config.dat.
 
 1. Run gate.cgi -> permissions
 http://www.hillside.net/europlop/europlop2012/submission/gate.cgi
 Expect initial submission screen
-Diagnostic: file permissions need to be set to 755
+Potential problem: file permissions need to be set to 755
 
 2. Recover forgotten password for a reviewer
 http://www.hillside.net/europlop/europlop2011/submission/gate.cgi?action=send_login
