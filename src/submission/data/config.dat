@@ -15,7 +15,7 @@ web_chair_email=dean@example.com
 program_chair_title=Program Chair
 
 admin_user=europlop
-admin_password=admin
+admin_password=games
 
 track_1=Pattern papers
 track_1_chair_email=alice@example.com

@@ -1,5 +1,7 @@
 package Serialize;
 
+use Core::Audit;
+
 my $LOCK = 2;
 my $UNLOCK = 8;
 
@@ -16,7 +18,7 @@ sub getReference {
 	}
 
 	open(DATA, ">data/reference.dat") ||
-		::handleError("Internal: could not set next reference");
+		Audit::handleError("Internal: could not set next reference");
 	print DATA "$reference";
 	close(DATA);
 
@@ -30,7 +32,7 @@ sub getConfig {
 
 	my %config;
 	open(DATA, "data/config.dat") ||
-		::handleError("Internal: could not get config");
+		Audit::handleError("Internal: could not get config");
 	while (<DATA>) {
 		chomp;
 		if (/^(\w+)=(.*)/) {
@@ -50,7 +52,7 @@ sub setConfig {
 
 	my $config = shift;
 	open(DATA, ">data/config.dat") ||
-		::handleError("Internal: could not set config");
+		Audit::handleError("Internal: could not set config");
 	foreach (keys %$config) {
 		print DATA "$_=$config->{$_}\n";
 	}
@@ -62,7 +64,7 @@ sub setConfig {
 sub saveState {
 	my ($name) = @_;
     open FILE, ">data/records/$name" || 
-    	::handleError("Internal: could not save submission record");
+    	Audit::handleError("Internal: could not save submission record");
     $::q->save(FILE);
     close FILE;
 }
@@ -70,7 +72,7 @@ sub saveState {
 sub loadState {
 	my ($reference) = @_;
     opendir DIR, "data/records" ||
-    	::handleError("Internal: could not search submission records");
+    	Audit::handleError("Internal: could not search submission records");
     # find most recent record for this reference
     # TODO: also want to get a list of records for a reference, and access a specific record by name
     # DONE: can get list of records for a reference already (see next line)
@@ -79,7 +81,7 @@ sub loadState {
     my $name = $records[-1];	# we know there is at least one
 #	print "reading record $name:\n";
     open FILE, "data/records/$name" ||
-    	::handleError("Internal: could not read submission record");
+    	Audit::handleError("Internal: could not read submission record");
     my $q_saved = new CGI(FILE);
     close FILE;
     return $q_saved;
