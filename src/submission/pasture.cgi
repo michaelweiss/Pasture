@@ -52,15 +52,10 @@ BEGIN {
 
 sub handleSignIn {
 	Format::createHeader("Pasture > Sign in", "", "js/validate.js");
-	Format::startForm("get", "menu");
+	Format::startForm("post", "menu");
 	
 	print <<END;
 	<p>Welcome to the $CONFERENCE submission site.</p>
-	<ul>
-END
-
-	print <<END;
-	</ul>
 
 	<div id="box">
 	<p>Please sign in using your account.</p>
@@ -91,7 +86,8 @@ END
 	Format::createFooter();
 }
 
- sub handleMenu {
+# Handle menu request
+sub handleMenu {
 	my $user, $password;
 	my $role;
 	
@@ -116,8 +112,103 @@ END
 	Format::createFooter();
 }
 
-# Check password
+# Handle sign up request
+sub handleSignUp {
+	Format::createHeader("Pasture > Sign up", "", "js/validate.js");
+	Format::startForm("post", "profile");
+	
+	print <<END;
+	<p>To sign up for an account, please fill in your profile.</p>
 
+	<div id="widebox">
+	<table cellpadding="0" cellspacing="5">
+		<tr>
+			<td>Select a user name (*):</td>
+			<td width="10"></td>
+			<td><input name="user" type="text"/></td>
+		</tr><tr>
+			<td></td>
+			<td width="10"></td>
+			<td><em>User names must be in one word, but can contain numbers</em></td>
+		</tr><tr>
+			<td>&nbsp;</td>
+			<td width="10"></td>
+			<td></td>
+		</tr><tr>
+			<td>First name (*):</td>
+			<td width="10"></td>
+			<td><input name="firstName" type="text" size="40"/></td>
+		</tr><tr>
+			<td>Last name (*):</td>
+			<td width="10"></td>
+			<td><input name="lastName" type="text" size="40"/></td>
+		</tr><tr>
+			<td>Email (*):</td>
+			<td width="10"></td>
+			<td><input name="email" type="text" size="40"/></td>
+		</tr><tr>
+			<td>Organization (*):</td>
+			<td width="10"></td>
+			<td><input name="organization" type="text" size="40"/></td>
+		</tr><tr>
+			<td>Country (*):</td>
+			<td width="10"></td>
+			<td><input name="country" type="text"/></td>
+		</tr><tr>
+			<td>Password (*):</td>
+			<td width="10"></td>
+			<td><input name="password" type="password"/></td>
+		</tr><tr>
+			<td>Confirm your password (*):</td>
+			<td width="10"></td>
+			<td><input name="passwordConfirmed" type="password"/></td>
+		</tr>
+	</table>
+END
+
+	Format::endForm("Sign up");
+		
+	print <<END;
+	</div>
+END
+
+	Format::createFooter();
+}
+
+# Handle profile request
+sub handleProfile {
+	my $user, $password;
+	
+	Assert::assertNotEmpty("user", "Need to enter a user name");
+	Assert::assertNotEmpty("firstName", "Need to enter your first name");
+	Assert::assertNotEmpty("lastName", "Need to enter your last name");
+	Assert::assertNotEmpty("email", "Need to enter your email");
+	Assert::assertNotEmpty("organization", "Need to enter your organization");
+	Assert::assertNotEmpty("country", "Need to enter your country");
+	Assert::assertNotEmpty("password", "Need to enter a password");
+	Assert::assertNotEmpty("passwordConfirmed", "Need to confirm your password");
+
+	$user = $::q->param("user");
+	$firstName = $::q->param("firstName");
+	$lastName = $::q->param("lastName");
+	$email = $::q->param("email");
+	$organization = $::q->param("organization");
+	$country = $::q->param("country");
+	$password = $::q->param("password");
+	$passwordConfirmed = $::q->param("passwordConfirmed");
+	
+	Assert::assertTrue($password eq $passwordConfirmed, "Passwords do not match");
+
+	Format::createHeader("Pasture > Profile", "", "js/validate.js");
+	
+	print <<END;
+<p>Hello, $firstName $lastName. Thank you for creating your account "$user".</p>
+END
+	
+	Format::createFooter();
+}
+
+# Check password
 sub checkPassword {
 	my ($user, $password) = @_;
 	if (checkAdminPassword($user, $password)) {
@@ -179,6 +270,10 @@ if ($action eq "sign_in") {
 	handleSignIn();
 } elsif ($action eq "menu") {
 	handleMenu();
+} elsif ($action eq "sign_up") {
+	handleSignUp();
+} elsif ($action eq "profile") {
+	handleProfile();
 } else {
 	Audit::handleError("No such action");
 }

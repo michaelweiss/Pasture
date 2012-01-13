@@ -41,6 +41,19 @@ div#box {
 	background-color: light-grey; 
 }
 
+div#widebox {
+	width: 600px;
+	padding-left: 10pt;
+	padding-right: 10pt;
+	border-radius: 1em;
+	-webkit-border-radius: 1em;
+	-moz-border-radius: 1em;
+	border-width: 2px;
+	border-style: solid;
+	border-color: #94b4e2;
+	background-color: light-grey; 
+}
+
 .menu {
 list-style-type: none;
 line-height: 1.4em; 

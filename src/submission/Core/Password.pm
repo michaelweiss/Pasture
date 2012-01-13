@@ -39,7 +39,27 @@ sub _restricted {
 	return $password =~ /f.ck|ass|rsch|tit|cum|[aoi]ck|asm|orn|eil|otz|oes/i;
 }
 
-sub checkPassword {
+sub checkUserPassword {
+	my ($user, $password) = @_;
+	# TODO: convert user name to lower case, should be case-insensitive
+	# TODO: create hash of password
+	my $match = 0;
+	open (PASSWORD, "data/password.dat") ||
+		Audit::handleError("Internal: could not check login");
+	flock(PASSWORD, $LOCK);
+	while (<PASSWORD>) {
+		if (/^$user, $password$/) {
+			$match = 1; 
+			last;
+		}
+	}
+	flock(PASSWORD, $UNLOCK);
+	close (PASSWORD);
+	return $match;
+}
+
+# obsolete
+sub checkPassword_ {
 	my ($reference, $email, $password) = @_;
 	my $match = 0;
 	open (PASSWORD, "data/password.dat") ||
@@ -70,7 +90,19 @@ sub checkPassword {
 	return $match;
 }
 
-sub logPassword {
+sub logUserPassword {
+	my ($user, $password) = @_;
+	# TODO: convert user name to lower case, should be case-insensitive
+	open (PASSWORD, ">>data/password.dat") ||
+		Audit::handleError("Internal: could not save password");
+	flock(PASSWORD, $LOCK);
+	print PASSWORD "$user, $password\n";
+	flock(PASSWORD, $UNLOCK);
+	close (PASSWORD);
+}
+
+# obsolete
+sub logPassword_ {
 	my ($reference, $email, $password) = @_;
 	open (PASSWORD, ">>data/password.dat") ||
 		Audit::handleError("Internal: could not save password");
@@ -80,7 +112,25 @@ sub logPassword {
 	close (PASSWORD);
 }
 
-sub retrievePassword {
+sub retrieveUserPassword {
+	my ($user) = @_;
+	my $match = "";
+	open (PASSWORD, "data/password.dat") ||
+		Audit::handleError("Internal: could not check login");
+	flock(PASSWORD, $LOCK);
+	while (<PASSWORD>) {
+		if (/^$user, (.+)$/) {
+			$match = $1; 
+			last;
+		}
+	}
+	flock(PASSWORD, $UNLOCK);
+	close (PASSWORD);
+	return $match;	
+}
+
+# obsolete
+sub retrievePassword_ {
 	my ($referenceOrEmail) = @_;
 	my $match = "";
 	open (PASSWORD, "data/password.dat") ||
@@ -111,8 +161,11 @@ sub retrievePassword {
 	return $match;
 }
 
+# TODO: now I need to create a submission log, or search the submission records
+# second alternative requires less changes, even though it less efficient
+
 # TODO: refactor
-sub getReferencesByAuthor {
+sub getReferencesByAuthor_ {
 	my ($email) = @_;
 	my @references;
 	open (PASSWORD, "data/password.dat") ||
