@@ -52,7 +52,7 @@ BEGIN {
 
 sub handleSignIn {
 	Format::createHeader("Pasture > Sign in", "", "js/validate.js");
-	Format::startForm("post", "menu");
+	Format::startForm("get", "menu");
 	
 	print <<END;
 	<p>Welcome to the $CONFERENCE submission site.</p>
@@ -91,6 +91,85 @@ END
 	Format::createFooter();
 }
 
+ sub handleMenu {
+	my $user, $password;
+	my $role;
+	
+	Assert::assertNotEmpty("user", "Need to enter a user name");
+	Assert::assertNotEmpty("password", "Need to enter a password");
+
+	$user = $q->param("user");
+	$password = $q->param("password");
+		
+	$role = checkPassword($user, $password);
+	Assert::assertTrue($role, "User name and password do not match");
+	
+	my $session = Session::create(Session::uniqueId(), $timestamp);
+	Session::setUser($session, $user, $role);
+	
+	Format::createHeader("Pasture > Menu");
+	
+	print <<END;
+<p>You have logged in successfully.</p>
+END
+	
+	Format::createFooter();
+}
+
+# Check password
+
+sub checkPassword {
+	my ($user, $password) = @_;
+	if (checkAdminPassword($user, $password)) {
+		return "admin";
+	}
+	return "";
+}
+
+sub checkAdminPassword {
+	my ($user, $password) = @_;
+	if ($user eq $config->{"admin_user"}) {
+		if ($password eq $config->{"admin_password"}) {
+			return "admin";
+		}
+	}
+	return "";
+}
+
+# Debug 
+
+sub dumpParameters {
+	print "<hr/>\n";
+	print "<ul>\n";
+	foreach $name ($q->param()) {
+		my $value = $q->param($name);
+		print "<li>$name: $value</li>\n";
+	}
+	print "</ul>\n";
+	print "<hr/>\n";
+}
+
+sub dumpRecord {
+	my ($record) = @_;
+	print "<hr/>\n";
+	print "<ul>\n";
+	foreach $name (keys %$record) {
+		my $value = $record->{$name};
+		print "<li>$name: $value</li>\n";
+	}
+	print "</ul>\n";
+	print "<hr/>\n";
+}
+
+sub printEnv {
+	print "<hr/>\n";
+	print "<tt>\n"; 
+	foreach $key (sort keys(%ENV)) { 
+		print "<li> $key = $ENV{$key}"; 
+   	} 
+	print "<tt/><hr/>\n";
+}
+	
 # Main dispatcher
 
 my $action = $q->param("action") || "sign_in";
@@ -98,6 +177,8 @@ Format::sanitizeInput();
 Audit::trace($action);
 if ($action eq "sign_in") {
 	handleSignIn();
+} elsif ($action eq "menu") {
+	handleMenu();
 } else {
 	Audit::handleError("No such action");
 }
