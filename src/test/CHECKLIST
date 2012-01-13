@@ -1,5 +1,27 @@
 During the first set of tests, set debug=1 in data/config.dat.
 
+1. Run pasture.cgi -> permissions
+http://www.hillside.net/europlop/europlop2012/_submission/pasture.cgi
+Expect initial sign in screen
+Potential problem: file permissions need to be set to 755
+
+2. Sign in as user test with password test
+http://www.hillside.net/europlop/europlop2012/_submission/pasture.cgi?action=menu&user=test&password=test
+Expect error that user and password do not match
+
+3. Sign up for a new account 
+http://www.hillside.net/europlop/europlop2012/_submission/pasture.cgi?action=sign_up
+Expect form for user profile
+
+4. Retrieve password
+http://www.hillside.net/europlop/europlop2012/_submission/pasture.cgi?action=send_login
+TODO: not done
+
+5. Fill in profile for a new account
+TODO: not done
+
+These need to be rewritten for the single user identify:
+
 1. Run gate.cgi -> permissions
 http://www.hillside.net/europlop/europlop2012/submission/gate.cgi
 Expect initial submission screen

@@ -116,7 +116,8 @@ sub retrieveUserPassword {
 	my ($user) = @_;
 	my $match = "";
 	open (PASSWORD, "data/password.dat") ||
-		Audit::handleError("Internal: could not check login");
+#		Audit::handleError("Internal: could not check login");
+		return "";
 	flock(PASSWORD, $LOCK);
 	while (<PASSWORD>) {
 		if (/^$user, (.+)$/) {

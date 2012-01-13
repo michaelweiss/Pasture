@@ -17,9 +17,7 @@ use Core::Access;
 use Core::Shepherd;
 use Core::Review;
 use Core::Audit;
-
-my $LOCK = 2;
-my $UNLOCK = 8;
+use Core::Debug;
 
 our $q = new CGI;
 our $timestamp = time();
@@ -54,6 +52,8 @@ sub handleSignIn {
 	Format::createHeader("Pasture > Sign in", "", "js/validate.js");
 	Format::startForm("post", "menu");
 	
+	# TODO: add hidden field or session parameter in cookie for the user's role
+	# we might want to log in users as a shepherd when they sign up to become a shepherd
 	print <<END;
 	<p>Welcome to the $CONFERENCE submission site.</p>
 
@@ -177,7 +177,9 @@ END
 
 # Handle profile request
 sub handleProfile {
-	my $user, $password;
+	my $user, $firstName, $lastName;
+	my $email, $organization, $country;
+	my $password, $passwordConfirmed; 
 	
 	Assert::assertNotEmpty("user", "Need to enter a user name");
 	Assert::assertNotEmpty("firstName", "Need to enter your first name");
@@ -197,13 +199,21 @@ sub handleProfile {
 	$password = $::q->param("password");
 	$passwordConfirmed = $::q->param("passwordConfirmed");
 	
-	Assert::assertTrue($password eq $passwordConfirmed, "Passwords do not match");
+	# check whether this user name is taken already
+	Assert::assertTrue(! Password::retrieveUserPassword($user),
+		"This user name already exists. Please select a different name");
+		
+	# check whether the passwords match
+	Assert::assertTrue($password eq $passwordConfirmed, 
+		"Passwords do not match");
 
 	Format::createHeader("Pasture > Profile", "", "js/validate.js");
 	
 	print <<END;
-<p>Hello, $firstName $lastName. Thank you for creating your account "$user".</p>
+<p>Hello, $firstName $lastName. Thank you for creating the account "$user".</p>
 END
+
+	Password::logUserPassword($user, $password);
 	
 	Format::createFooter();
 }
@@ -211,54 +221,12 @@ END
 # Check password
 sub checkPassword {
 	my ($user, $password) = @_;
-	if (checkAdminPassword($user, $password)) {
-		return "admin";
+	# if user and password are correct, allow the user to access the system
+	# default user role is "author"  
+	# TODO: should remember the last role the user was logged in as
+	if (Password::checkUserPassword($user, $password)) {
+		return "author";
 	}
-	return "";
-}
-
-sub checkAdminPassword {
-	my ($user, $password) = @_;
-	if ($user eq $config->{"admin_user"}) {
-		if ($password eq $config->{"admin_password"}) {
-			return "admin";
-		}
-	}
-	return "";
-}
-
-# Debug 
-
-sub dumpParameters {
-	print "<hr/>\n";
-	print "<ul>\n";
-	foreach $name ($q->param()) {
-		my $value = $q->param($name);
-		print "<li>$name: $value</li>\n";
-	}
-	print "</ul>\n";
-	print "<hr/>\n";
-}
-
-sub dumpRecord {
-	my ($record) = @_;
-	print "<hr/>\n";
-	print "<ul>\n";
-	foreach $name (keys %$record) {
-		my $value = $record->{$name};
-		print "<li>$name: $value</li>\n";
-	}
-	print "</ul>\n";
-	print "<hr/>\n";
-}
-
-sub printEnv {
-	print "<hr/>\n";
-	print "<tt>\n"; 
-	foreach $key (sort keys(%ENV)) { 
-		print "<li> $key = $ENV{$key}"; 
-   	} 
-	print "<tt/><hr/>\n";
 }
 	
 # Main dispatcher
