@@ -2,6 +2,7 @@ package Password;
 
 use lib '.';
 use Core::Audit;
+use Core::Assert;
 
 my $LOCK = 2;
 my $UNLOCK = 8;
@@ -39,13 +40,22 @@ sub _restricted {
 	return $password =~ /f.ck|ass|rsch|tit|cum|[aoi]ck|asm|orn|eil|otz|oes/i;
 }
 
+sub _salt {
+	my ($password) = @_;
+	Assert::assertTrue($::config->{"salt"}, "Admin: salt not configured");
+	return crypt($password, $::config->{"salt"});
+}
+
 sub checkUserPassword {
 	my ($user, $password) = @_;
-	# TODO: convert user name to lower case, should be case-insensitive
-	# TODO: create hash of password
+	# user name should not be case sensitive
+	$user = lc($user);
+	# create hash of password
+	$password = _salt($password);
+	
 	my $match = 0;
 	open (PASSWORD, "data/password.dat") ||
-		Audit::handleError("Internal: could not check login");
+		return "";
 	flock(PASSWORD, $LOCK);
 	while (<PASSWORD>) {
 		if (/^$user, $password$/) {
@@ -58,41 +68,13 @@ sub checkUserPassword {
 	return $match;
 }
 
-# obsolete
-sub checkPassword_ {
-	my ($reference, $email, $password) = @_;
-	my $match = 0;
-	open (PASSWORD, "data/password.dat") ||
-		Audit::handleError("Internal: could not check login");
-	flock(PASSWORD, $LOCK);
-	# Can check password for reference or email
-	if ($reference) {
-		# Reference provided -> check password
-		while (<PASSWORD>) {
-			# Skip email
-			if (/^$reference, .+?, $password/) {
-				$match = 1; 
-				last;
-			}
-		}
-	} elsif ($email) {
-		# Email provided -> check password
-		while (<PASSWORD>) {
-			# Skip reference
-			if (/, $email, $password$/) {
-				$match = 1; 
-				last;
-			}
-		}
-	}
-	flock(PASSWORD, $UNLOCK);
-	close (PASSWORD);
-	return $match;
-}
-
 sub logUserPassword {
 	my ($user, $password) = @_;
-	# TODO: convert user name to lower case, should be case-insensitive
+	# user name should not be case sensitive
+	$user = lc($user);
+	# create hash of password
+	$password = _salt($password);
+	
 	open (PASSWORD, ">>data/password.dat") ||
 		Audit::handleError("Internal: could not save password");
 	flock(PASSWORD, $LOCK);
@@ -101,19 +83,13 @@ sub logUserPassword {
 	close (PASSWORD);
 }
 
-# obsolete
-sub logPassword_ {
-	my ($reference, $email, $password) = @_;
-	open (PASSWORD, ">>data/password.dat") ||
-		Audit::handleError("Internal: could not save password");
-	flock(PASSWORD, $LOCK);
-	print PASSWORD "$reference, $email, $password\n";
-	flock(PASSWORD, $UNLOCK);
-	close (PASSWORD);
-}
-
+# retrieves password hash: can use this to check whether user exists
+# TODO: create a better name for this function
 sub retrieveUserPassword {
 	my ($user) = @_;
+	# user name should not be case sensitive
+	$user = lc($user);
+
 	my $match = "";
 	open (PASSWORD, "data/password.dat") ||
 #		Audit::handleError("Internal: could not check login");
@@ -128,38 +104,6 @@ sub retrieveUserPassword {
 	flock(PASSWORD, $UNLOCK);
 	close (PASSWORD);
 	return $match;	
-}
-
-# obsolete
-sub retrievePassword_ {
-	my ($referenceOrEmail) = @_;
-	my $match = "";
-	open (PASSWORD, "data/password.dat") ||
-		Audit::handleError("Internal: could not check login");
-	flock(PASSWORD, $LOCK);
-	# Can retrieve password for reference or email
-	if ($referenceOrEmail =~ /^\d+$/) {
-		# Reference provided -> retrieve password
-		while (<PASSWORD>) {
-			if (/^$referenceOrEmail, .+?, (.+)/) {
-				$match = $1; 
-				last;
-			}
-		}
-	} else {
-		# Email provided -> retrieve password
-		while (<PASSWORD>) {
-			# Skip reference
-			if (/, $referenceOrEmail, (.+)$/) {
-				$match = $1; 
-				last;
-			}
-		}
-	}
-	
-	flock(PASSWORD, $UNLOCK);
-	close (PASSWORD);
-	return $match;
 }
 
 # TODO: now I need to create a submission log, or search the submission records

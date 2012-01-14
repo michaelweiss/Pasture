@@ -77,7 +77,7 @@ END
 	Format::createFreetext(
 		"If you do not have an account, please <a href=\"$baseUrl/$script?action=sign_up\">sign up for one</a>.");
 	Format::createFreetext(
-		"If you forgot your password, <a href=\"$baseUrl/$script?action=send_login\">retrieve it here</a>.");
+		"If you forgot your password, <a href=\"$baseUrl/$script?action=send_login\">click here</a>.");
 		
 	print <<END;
 	</div>
@@ -199,6 +199,8 @@ sub handleProfile {
 	$password = $::q->param("password");
 	$passwordConfirmed = $::q->param("passwordConfirmed");
 	
+	# TODO: check that user name is a single word, which may contain numbers
+	
 	# check whether this user name is taken already
 	Assert::assertTrue(! Password::retrieveUserPassword($user),
 		"This user name already exists. Please select a different name");
@@ -215,6 +217,16 @@ END
 
 	Password::logUserPassword($user, $password);
 	
+	Format::createFooter();
+}
+
+# Handle send login requests
+sub handleSendLogin {
+	Format::createHeader("Pasture > Sign up", "", "js/validate.js");
+	print <<END;
+<p>Oops, this feature has not been implemented yet. If you don't have an account, 
+you need to <a href=\"$baseUrl/$script?action=sign_up\">sign up for one</a>.</p>
+END
 	Format::createFooter();
 }
 
@@ -242,6 +254,8 @@ if ($action eq "sign_in") {
 	handleSignUp();
 } elsif ($action eq "profile") {
 	handleProfile();
+} elsif ($action eq "send_login") {
+	handleSendLogin();
 } else {
 	Audit::handleError("No such action");
 }

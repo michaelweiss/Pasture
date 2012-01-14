@@ -26,6 +26,7 @@ track_3_chair_email=alice@example.com
 focus_group_track=3
 
 secret=secret
+salt=pepper
 
 submission_open=1
 screen_open=0
