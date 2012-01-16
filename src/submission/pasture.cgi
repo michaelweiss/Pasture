@@ -26,6 +26,8 @@ our $config = Serialize::getConfig();
 our $WEB_CHAIR = $config->{"web_chair"};
 our $WEB_CHAIR_EMAIL = $config->{"web_chair_email"};
 our $CONFERENCE = $config->{"conference"};
+our $SUBMISSION_OPEN = $config->{"submission_open"};
+our $SHEPHERD_SUBMISSION_OPEN = $config->{"shepherd_submission_open"};
 our $baseUrl = $config->{"url"};
 
 my $script = "pasture.cgi";
@@ -103,12 +105,20 @@ sub handleMenu {
 	my $session = Session::create(Session::uniqueId(), $timestamp);
 	Session::setUser($session, $user, $role);
 	
+	# fake getting roles from user profile
+	my $roles;
+	$roles{"author"} = 1;
+
 	Format::createHeader("Pasture > Menu");
 	
 	print <<END;
-<p>You have logged in successfully.</p>
+<p>Here is what you can do:</p>
 END
-	
+
+	if ($roles{"author"}) {
+		authorMenu($session, $user);
+	}
+		
 	Format::createFooter();
 }
 
@@ -209,10 +219,14 @@ sub handleProfile {
 	Assert::assertTrue($password eq $passwordConfirmed, 
 		"Passwords do not match");
 
+	# default role is author
+	my $role = "author";
+	
 	Format::createHeader("Pasture > Profile", "", "js/validate.js");
 	
 	print <<END;
-<p>Hello, $firstName $lastName. Thank you for creating the account "$user".</p>
+<p>Hello, $firstName $lastName. Your account has been created.</p>
+<p>You can now <a href=\"$baseUrl/$script?action=sign_in\">log into the submission system</a>.</p>
 END
 
 	Password::logUserPassword($user, $password);
@@ -239,6 +253,33 @@ sub checkPassword {
 	if (Password::checkUserPassword($user, $password)) {
 		return "author";
 	}
+}
+
+# Menus
+
+sub authorMenu {
+	my ($session, $user) = @_;
+	print <<END;
+	<ul>
+END
+
+	# user can submit a paper ...
+	Format::createAction($SUBMISSION_OPEN, $baseUrl . "/submit.cgi?action=submit&status=new", 
+		"Submit a paper", "submission is now closed");
+	
+	# TODO: need to rewrite getReferencesByAuthor to read from submission log
+	my @references = (); #Password::getReferencesByAuthor($user);
+	my %labels = Records::listCurrent();
+	foreach $reference (@references) {
+		my $record = Records::getRecord($labels{$reference}); 
+		my $title = $record->param("title");
+		print <<END;
+		<li><a href="submit.cgi?action=submit&session=$session&status=existing&reference=$reference">Update your submission (#$reference): $title</a></li>
+END
+	}
+	print <<END;
+	</ul>
+END
 }
 	
 # Main dispatcher
