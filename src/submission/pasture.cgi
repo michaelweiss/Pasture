@@ -16,6 +16,8 @@ use Core::Password;
 use Core::Access;
 use Core::Shepherd;
 use Core::Review;
+use Core::User;
+use Core::Contact;
 use Core::Audit;
 use Core::Debug;
 
@@ -157,9 +159,9 @@ sub handleSignUp {
 			<td width="10"></td>
 			<td><input name="email" type="text" size="40"/></td>
 		</tr><tr>
-			<td>Organization (*):</td>
+			<td>Affiliation (*):</td>
 			<td width="10"></td>
-			<td><input name="organization" type="text" size="40"/></td>
+			<td><input name="affiliation" type="text" size="40"/></td>
 		</tr><tr>
 			<td>Country (*):</td>
 			<td width="10"></td>
@@ -188,14 +190,14 @@ END
 # Handle profile request
 sub handleProfile {
 	my $user, $firstName, $lastName;
-	my $email, $organization, $country;
+	my $email, $affiliation, $country;
 	my $password, $passwordConfirmed; 
 	
 	Assert::assertNotEmpty("user", "Need to enter a user name");
 	Assert::assertNotEmpty("firstName", "Need to enter your first name");
 	Assert::assertNotEmpty("lastName", "Need to enter your last name");
 	Assert::assertNotEmpty("email", "Need to enter your email");
-	Assert::assertNotEmpty("organization", "Need to enter your organization");
+	Assert::assertNotEmpty("affiliation", "Need to enter your affiliation");
 	Assert::assertNotEmpty("country", "Need to enter your country");
 	Assert::assertNotEmpty("password", "Need to enter a password");
 	Assert::assertNotEmpty("passwordConfirmed", "Need to confirm your password");
@@ -204,7 +206,7 @@ sub handleProfile {
 	$firstName = $::q->param("firstName");
 	$lastName = $::q->param("lastName");
 	$email = $::q->param("email");
-	$organization = $::q->param("organization");
+	$affiliation = $::q->param("affiliation");
 	$country = $::q->param("country");
 	$password = $::q->param("password");
 	$passwordConfirmed = $::q->param("passwordConfirmed");
@@ -218,6 +220,10 @@ sub handleProfile {
 	# check whether the passwords match
 	Assert::assertTrue($password eq $passwordConfirmed, 
 		"Passwords do not match");
+		
+	Password::logUserPassword($user, $password);
+	User::saveUser($user, $firstName, $lastName, $affiliation, $country);
+	Contact::saveContact($user, $email);
 
 	# default role is author
 	my $role = "author";
@@ -228,8 +234,6 @@ sub handleProfile {
 <p>Hello, $firstName $lastName. Your account has been created.</p>
 <p>You can now <a href=\"$baseUrl/$script?action=sign_in\">log into the submission system</a>.</p>
 END
-
-	Password::logUserPassword($user, $password);
 	
 	Format::createFooter();
 }

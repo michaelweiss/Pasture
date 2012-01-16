@@ -128,4 +128,4 @@ sub getReferencesByAuthor_ {
 	return @references;
 }
 
-
+1;
