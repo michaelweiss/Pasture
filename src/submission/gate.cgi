@@ -111,15 +111,29 @@ sub handleMenu {
 	my $roles;
 	$roles{"author"} = 1;
 
+	my %profile = User::loadUser($user);
+	my %contact = Contact::loadContact($user);
+	
 	Format::createHeader("Gate > Menu");
 	
 	print <<END;
+<p>Dear $profile{"firstName"}, you are logged into the $CONFERENCE submission site.</p>
+
+<div id="widebox">
 <p>Here is what you can do:</p>
 END
 
 	if ($roles{"author"}) {
 		authorMenu($session, $user);
 	}
+
+	print <<END;
+<ul>
+	<li>Change role</li>
+	<li>Change conference</li>
+</ul>
+</div>
+END
 		
 	Format::createFooter();
 }
@@ -268,8 +282,8 @@ sub authorMenu {
 END
 
 	# user can submit a paper ...
-	Format::createAction($SUBMISSION_OPEN, $baseUrl . "/submit.cgi?action=submit&status=new", 
-		"Submit a paper", "submission is now closed");
+	Format::createAction($SUBMISSION_OPEN, $baseUrl . "/submit.cgi?action=submit&session=$session&status=new", 
+		"Submit a new paper", "submission is now closed");
 	
 	# TODO: need to rewrite getReferencesByAuthor to read from submission log
 	my @references = (); #Password::getReferencesByAuthor($user);

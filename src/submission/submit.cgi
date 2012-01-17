@@ -6,6 +6,7 @@ use URI::Escape ('uri_escape');
 
 use lib '.';
 use Core::Assert;
+use Core::Audit;
 use Core::Format;
 use Core::Upload;
 use Core::Serialize;
@@ -16,6 +17,8 @@ use Core::Password;
 use Core::Access;
 use Core::Shepherd;
 use Core::Review;
+use Core::User;
+use Core::Contact;
 
 my $LOCK = 2;
 my $UNLOCK = 8;
@@ -130,22 +133,33 @@ sub handleSubmit {
 			$session = Session::create(Session::uniqueId(), $timestamp);
 		}
 	} elsif ($q->param("status") eq "existing") {
-		Assert::assertEquals("reference", "\\d+", "Please enter a valid reference number");
+		Assert::assertEquals("reference", "\\d+", "No valid reference number");
 		$reference = $q->param("reference");
 		# DONE: enable, once we use passwords
 		unless ($user) {
 			# password only needed if user not already authenticated
-			Assert::assertNotEmpty("password", "Please enter the password sent with your confirmation email.");
+			Assert::assertNotEmpty("password", "Please enter your password.");
 		}
 	}
 
 	# DONE: check that this is a valid session id
-	Assert::assertTrue($session ne "", "Need to log in first");
+	Assert::assertTrue($session ne "", "Need to sign in first");
 	Assert::assertTrue(Session::check($session), 
 		"Session expired. Please sign in first.");
 		
+	# Only registered authors can submit a paper
+	Assert::assertTrue($user, "Need to create an account first");
+		
 	# existing data
-	my $q_saved = new CGI();;
+	my $q_saved = new CGI();
+	
+	if ($q->param("status") eq "new") {
+		%profile = User::loadUser($user);
+		$q_saved->param("contact_name" => $profile{"firstName"} . " " . $profile{"lastName"});
+
+		%contact = Contact::loadContact($user);	
+		$q_saved->param("contact_email" => $contact{"email"});
+	}
 	
 	# DONE: for an existing paper check reference against email and password
 	if ($reference) {
@@ -169,10 +183,20 @@ sub handleSubmit {
 			}
 		}
 		$q_saved = Serialize::loadState($reference);
-		Format::createHeader("Submission", "Update submission $reference", "js/validate.js");
+		Format::createHeader("Submit > Edit", "", "js/validate.js");
+		print <<END;
+	<p>Dear $profile{"firstName"}, to update your paper $reference make changes below.</p>
+END
 	} else {
-		Format::createHeader("Submission", "Enter initial submission", "js/validate.js");
+		Format::createHeader("Submit > Edit", "", "js/validate.js");
+		print <<END;
+	<p>Dear $profile{"firstName"}, enter your initial submission for $CONFERENCE below.</p>
+END
 	}
+		 
+	print <<END;	
+	<div id="widebox">
+END
 	
 	# TODO: client-side validation of input
 	Format::startMultiPartForm("post", "submit_confirmed", "return checkSubmitForm(this)");
@@ -183,12 +207,15 @@ sub handleSubmit {
 		Format::createHidden("reference", $reference);
 	}
 	
-	Format::createTextWithTitle("Title", 
+	# TODO: somewhat redundant, as user will also be in session data
+	Format::createHidden("user", $user);
+	
+	Format::createTextWithTitle("Title (*)", 
 		"Title of your submission", "title", 60, $q_saved->param("title"));
-	Format::createTextAreaWithTitle("Authors", 
+	Format::createTextAreaWithTitle("Authors (*)", 
 		"Enter author (first and last name) on a separate line", "authors", 50, 4,
 		$q_saved->param("authors"));
-	Format::createTextWithTitle("Contact author", 
+	Format::createTextWithTitle("Contact author (*)", 
 		"Name (first and last name)", "contact_name", 60, $q_saved->param("contact_name"));
 	# DONE: carry forward email from sign-in form
 	Format::createTextWithTitle("", 
@@ -200,27 +227,32 @@ sub handleSubmit {
 	# really be validating track selection on client)
 	# TODO: make number of tracks and track rerpresenting focus groups
 	# configurable in config.dat
-	Format::createRadioButtonsWithTitle("Track", 
+	Format::createRadioButtonsWithTitle("Track (*)", 
 		"Desired track", "track",
 		"1", $config->{"track_1"},
 		"2", $config->{"track_2"},
 		"3", $config->{"track_3"},
 		$q_saved->param("track") || "1");
-	Format::createTextAreaWithTitle("Abstract", 
+	Format::createTextAreaWithTitle("Abstract (*)", 
 		"Enter your abstract here", "abstract", 50, 8,
 		$q_saved->param("abstract"));
 	Format::createTextWithTitle("Keywords", 
-		"Enter keywords (at least one) that describe your submission (separate keywords by commas)", "tags", 60, $q_saved->param("tags"));
-	Format::createFileUpload("File upload",						# no default
-		"Upload your file in PDF or Word format. If you want to revise it later, you can upload a new version any time", "paper", 40);
+		"Enter keywords (separated by commas) that describe your submission", "tags", 60, $q_saved->param("tags"));
+	Format::createFileUpload("File upload (*)",						# no default
+		"Upload your file in PDF or Word format", "paper", 40);
 	if ($q->param("status") eq "existing") {
-		Format::createTextWithTitle("Reason for update",		# no default
+		Format::createTextWithTitle("Reason for update (*)",		# no default
 			"Provide a reason for the update (required)", "reason", 60);
 	}
 	Format::createTextAreaWithTitle("Comments", 				# no default
 		"If you have additional comments for the program committee, enter them here", "comments", 50, 4);
-	Format::createFreetext("Once you submit, you will receive a confirmation email with this information and your reference number");
+	Format::createFreetext("Once you submit, you will receive a confirmation email");
 	Format::endForm("Submit", "Clear");
+
+	print <<END;
+	</div>
+END
+
 	Format::createFooter();
 }
 
@@ -230,6 +262,13 @@ sub handleUpload {
 }
 
 sub handleSubmitConfirmed {
+	# User must be logged in already
+	my $session = $q->param("session");
+	my $sessionInfo = Session::check($session);
+	my ($user, $role) = $sessionInfo =~ /:(.+?):(.+)/;
+	Assert::assertTrue($user, "Need to create an account first");
+
+	# Check that form is complete
 	Assert::assertNotEmpty("title", "Please enter a title for your submission");
 	Assert::assertNotEmpty("authors", "Please enter at least one author");
 	Assert::assertEquals("contact_name", "\\w+\\s+\\w+", "No valid contact name provided (FirstName LastName)");
@@ -240,12 +279,7 @@ sub handleSubmitConfirmed {
 	# and it can make the system annoying to use
 	# Assert::assertNotEmpty("tags", "Please enter at least one keyword");
 	Assert::assertNotEmpty("paper", "Please select a file to upload");
-	
-	# DONE check that this is a valid session id
-	Assert::assertNotEmpty("session", "Need to log in");
-	Assert::assertTrue(Session::check($q->param("session")), 
-		"Session expired. Please sign in first.");
-
+		
 	my $isInitialSubmission;
 	if ($q->param("reference")) {
 		Assert::assertNotEmpty("reason", "Please enter a reason for the update");
@@ -265,7 +299,9 @@ sub handleSubmitConfirmed {
 	
 	# DONE: invalidate session
 	# NOTE: Only invalidate session if all required parameters have been submitted
-	Session::invalidate($q->param("session"));
+	
+	# DONE: no longer invalidate the session (session expires when user logs out or exits browser)
+	# Session::invalidate($q->param("session"));
 	
     # DONE: save submission record (with timestamp, so history can be reconstructed)
 	my ($reference) = $q->param("reference") =~ /(\d+)/;
@@ -293,43 +329,19 @@ sub handleSubmitConfirmed {
 	my $comments = $q->param("comments");
 
 	if ($isInitialSubmission) {
-		# check if email is already linked against an account
-		# test if author password exists ...
-		my $otherPasswordForEmail = 
-			Password::retrievePassword($contact_email);
-		# ... or if reviewer, admin, or shepherd password exists ...
-		unless ($otherPasswordForEmail) {
-			$otherPasswordForEmail = Review::getPassword($contact_email);
-		}
-		# ... otherwise create a new password	
-		unless ($otherPasswordForEmail) {
-			$password = Password::generatePassword(6);
-		} else {
-			$password = $otherPasswordForEmail;
-		}
-		# DONE: right place to store password? also create a log of reference, password pairs
-		# TODO: should store encrypted password instead
-		$q->param("password" => $password);
-		
-		# TODO: move password management to Password
-		Password::logPassword($reference, $contact_email, $password);
 		print <<END;
 <p>Dear $firstName,</p>
 <p>thank you for your submission "$title" ($uploadedSize kB).</p>
 	<dd>Track: $trackTitle</dd>
 	<dd>Reference number: $reference</dd>
-<p>Please note your password. You need it to upload a new version of your submission:</p>
-	<dd>Email: $contact_email</dd>
-	<dd>Password: $password</dd>
 END
 	} else {
 		print <<END;
 <p>Dear $firstName,</p>
 <p>thank you for your updated submission "$title" ($uploadedSize kB).</p>
 	<dd>Track: $trackTitle</dd>
+	<dd>Reference number: $reference</dd>
 	<dd>Reason for update: $reason</dd>
-	
-	<!-- <dd>Reference number: $reference</dd> -->
 END
 	}
 
@@ -340,10 +352,11 @@ END
 $CONFERENCE Conference Chairs</p>
 END
 
+	# No longer send password in email
 	my $status1 = sendSubmissionConfirmation($contact_email, $name, $firstName, 
-		$title, $track, $uploadedSize, $reference, $password, $reason);
+		$title, $track, $uploadedSize, $reference, $isInitialSubmission, $reason);
 	my $status2 = notifyChairsOfSubmission($contact_email, $name, 
-		$title, $track, $reference, $password, $reason, $abstract, $comments);
+		$title, $track, $reference, $isInitialSubmission, $reason, $abstract, $comments);
 	if ($config->{"debug"}) {
 		print "Email 1: <pre>$status1</pre>";
 		print "Email 2: <pre>$status2</pre>";
@@ -500,7 +513,7 @@ sub printEnv {
 # Send submission confirmation to author and chairs
 sub sendSubmissionConfirmation {
 	my ($contact_email, $name, $firstName, 
-		$title, $track, $uploadedSize, $reference, $password, $reason) = @_;
+		$title, $track, $uploadedSize, $reference, $isInitialSubmission, $reason) = @_;
 
 	my $label = $timestamp . "_" . $reference;
 	my $token = Access::token($label);
@@ -517,7 +530,7 @@ sub sendSubmissionConfirmation {
 	open (MAIL, ">$tmpFileName") || 
 		Audit::handleError("Cannot create temporary file");
 
-	if ($password ne "") {
+	if ($isInitialSubmission) {
 		print MAIL <<END;
 Dear $firstName,
 
@@ -525,11 +538,6 @@ thank you for your submission "$title" ($uploadedSize kB).
 
 Track: $trackTitle
 Reference number: $reference
-
-Please note your password. You need it to upload a new version of your submission:
-
-Email: $contact_email
-Password: $password
 
 $PROGRAM_CHAIR, $CONFERENCE_CHAIR	
 $CONFERENCE Conference Chairs
@@ -541,6 +549,7 @@ Dear $firstName,
 thank you for your updated submission "$title" ($uploadedSize kB).
 
 Track: $trackTitle
+Reference number: $reference
 Reason for update: $reason
 	
 $PROGRAM_CHAIR, $CONFERENCE_CHAIR
@@ -558,7 +567,7 @@ END
 #
 sub notifyChairsOfSubmission {
 	my ($contact_email, $name, 
-		$title, $track, $reference, $password, $reason, 
+		$title, $track, $reference, $isInitialSubmission, $reason, 
 		$abstract, $comments) = @_;
 
 	my $label = $timestamp . "_" . $reference;
@@ -579,7 +588,7 @@ sub notifyChairsOfSubmission {
 	Audit::handleError("Cannot create temporary file");
 
 	my $status;
-	if ($password ne "") {
+	if ($isInitialSubmission) {
 		$status = "New";
 		print MAIL <<END;
 New submission received from $name ($contact_email).
