@@ -82,6 +82,10 @@ input {
 	font-size: 11pt;
 }
 
+textarea {
+	font-size: 11pt;
+}
+
 
 td.fg {
 	background-color:#FAF496;

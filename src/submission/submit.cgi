@@ -151,14 +151,14 @@ sub handleSubmit {
 	# Only registered authors can submit a paper
 	Assert::assertTrue($user, "Need to create an account first");
 		
+	my %profile = User::loadUser($user);
+	my %contact = Contact::loadContact($user);	
+
 	# existing data
 	my $q_saved = new CGI();
 	
 	if ($q->param("status") eq "new") {
-		%profile = User::loadUser($user);
 		$q_saved->param("contact_name" => $profile{"firstName"} . " " . $profile{"lastName"});
-
-		%contact = Contact::loadContact($user);	
 		$q_saved->param("contact_email" => $contact{"email"});
 	}
 	
@@ -167,7 +167,7 @@ sub handleSubmit {
 		if ($user) {
 			# if user already authenticated, check if he/she is the author
 			# of the submission $reference
-			my @references = Password::getReferencesByAuthor($user);
+			my @references = Submission::lookupSubmissionsByAuthor($user);
 			my $found = 0;
 			foreach $r (@references) {
 				if ($r == $reference) {
@@ -186,7 +186,7 @@ sub handleSubmit {
 		$q_saved = Serialize::loadState($reference);
 		Format::createHeader("Submit > Edit", "", "js/validate.js");
 		print <<END;
-	<p>Dear $profile{"firstName"}, to update your paper $reference make changes below.</p>
+	<p>Dear $profile{"firstName"}, to update your submission (#$reference) make changes below.</p>
 END
 	} else {
 		Format::createHeader("Submit > Edit", "", "js/validate.js");
@@ -311,7 +311,7 @@ sub handleSubmitConfirmed {
     # MOVE: redirect to action "submit_confirmed"
     # MOVE: this action should be renamed to "upload" instead
     
-	Format::createHeader("Submission confirmed");
+	Format::createHeader("Submit > Confirmed", "", "js/validate.js");
 	
 	my $name =  $q->param("contact_name");
 	my ($firstName) = $q->param("contact_name") =~ /^(\w+)/;
@@ -372,7 +372,7 @@ END
 
 sub handleSendAuthorLogin {
 	unless ($q->param("reference")) {
-		Format::createHeader("Password help", "", "");
+		Format::createHeader("Submit > Password", "", "");
 		Format::startForm("post", "send_author_login");
 		Format::createFreetext("To retrieve your password, please provide the reference number of your paper.");
 		Format::createTextWithTitle("Enter your reference number", 
@@ -384,7 +384,7 @@ sub handleSendAuthorLogin {
 		Assert::assertEquals("reference", "\\d+", "Please enter a valid reference number");
 		my $status = sendPasswordForReference($q->param("reference"));
 		if ($config->{"debug"}) {
-			Format::createHeader("Password help", "", "");
+			Format::createHeader("Submit > Password", "", "");
 			print "Email: <pre>$status</pre>";
 			Format::createFooter();
 		} else {
@@ -396,7 +396,7 @@ sub handleSendAuthorLogin {
 # Not working yet, but can be implemented with new retrievePassword
 sub handleSendNonAuthorLogin {
 	unless ($q->param("email")) {
-		Format::createHeader("Password help", "", "");
+		Format::createHeader("Submit > Password", "", "");
 		Format::startForm("post", "send_non_author_login");
 		Format::createFreetext("To retrieve your password, please provide the email address you use to log in.");
 		Format::createTextWithTitle("Enter your email address", 
@@ -413,7 +413,7 @@ sub handleError {
 	my ($error) = @_;
 	# DONE: log errors with error details
 	addToErrorLog($error);
-	Format::createHeader("Error");
+	Format::createHeader("Submit > Error");
 	my $uriEncodedError = uri_escape($error);
 	print <<END;
 <p><b style="color:red">$error</b></p>
@@ -675,7 +675,7 @@ if ($action eq "sign_in") {
 } elsif ($action eq "submit_confirmed") {
 	handleSubmitConfirmed();
 } elsif ($action eq "test") {
-	Format::createHeader("Test");
+	Format::createHeader("Submit > Test");
 	printEnv();
 	Format::createFooter();
 } elsif ($action eq "send_author_login") {

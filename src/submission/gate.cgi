@@ -18,6 +18,7 @@ use Core::Shepherd;
 use Core::Review;
 use Core::User;
 use Core::Contact;
+use Core::Submission;
 use Core::Audit;
 use Core::Debug;
 
@@ -285,8 +286,8 @@ END
 	Format::createAction($SUBMISSION_OPEN, $baseUrl . "/submit.cgi?action=submit&session=$session&status=new", 
 		"Submit a new paper", "submission is now closed");
 	
-	# TODO: need to rewrite getReferencesByAuthor to read from submission log
-	my @references = (); #Password::getReferencesByAuthor($user);
+	# DONE: need to rewrite getReferencesByAuthor to read from submission log
+	my @references = Submission::lookupSubmissionsByAuthor($user);
 	my %labels = Records::listCurrent();
 	foreach $reference (@references) {
 		my $record = Records::getRecord($labels{$reference}); 
