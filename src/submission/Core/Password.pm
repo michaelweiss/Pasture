@@ -58,7 +58,7 @@ sub checkUserPassword {
 		return "";
 	flock(PASSWORD, $LOCK);
 	while (<PASSWORD>) {
-		if (/^$user, $password$/) {
+		if (/^$user\t$password$/) {
 			$match = 1; 
 			last;
 		}
@@ -78,14 +78,14 @@ sub logUserPassword {
 	open (PASSWORD, ">>data/password.dat") ||
 		Audit::handleError("Internal: could not save password");
 	flock(PASSWORD, $LOCK);
-	print PASSWORD "$user, $password\n";
+	print PASSWORD "$user\t$password\n";
 	flock(PASSWORD, $UNLOCK);
 	close (PASSWORD);
 }
 
 # retrieves password hash: can use this to check whether user exists
-# TODO: create a better name for this function
-sub retrieveUserPassword {
+# DONE: create a better name for this function
+sub existsUser {
 	my ($user) = @_;
 	# user name should not be case sensitive
 	$user = lc($user);
@@ -96,7 +96,7 @@ sub retrieveUserPassword {
 		return "";
 	flock(PASSWORD, $LOCK);
 	while (<PASSWORD>) {
-		if (/^$user, (.+)$/) {
+		if (/^$user\t(.+)$/) {
 			$match = $1; 
 			last;
 		}
@@ -104,28 +104,6 @@ sub retrieveUserPassword {
 	flock(PASSWORD, $UNLOCK);
 	close (PASSWORD);
 	return $match;	
-}
-
-# TODO: now I need to create a submission log, or search the submission records
-# second alternative requires less changes, even though it less efficient
-
-# TODO: refactor
-sub getReferencesByAuthor_ {
-	my ($email) = @_;
-	my @references;
-	open (PASSWORD, "data/password.dat") ||
-		Audit::handleError("Internal: could not check login");
-	
-	flock(PASSWORD, $LOCK);
-	while (<PASSWORD>) {
-		if (/^(\d+), $email,/) {
-			push(@references, $1); 
-		}
-	}
-	flock(PASSWORD, $UNLOCK);
-	
-	close (PASSWORD);
-	return @references;
 }
 
 1;

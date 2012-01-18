@@ -19,6 +19,7 @@ use Core::Shepherd;
 use Core::Review;
 use Core::User;
 use Core::Contact;
+use Core::Submission;
 
 my $LOCK = 2;
 my $UNLOCK = 8;
@@ -262,7 +263,7 @@ sub handleUpload {
 }
 
 sub handleSubmitConfirmed {
-	# User must be logged in already
+	# User must be logged in already in this version
 	my $session = $q->param("session");
 	my $sessionInfo = Session::check($session);
 	my ($user, $role) = $sessionInfo =~ /:(.+?):(.+)/;
@@ -329,16 +330,21 @@ sub handleSubmitConfirmed {
 	my $comments = $q->param("comments");
 
 	if ($isInitialSubmission) {
+		# create record of submission
+		# while information is available from full submission records, creating this index will be 
+		# more efficient, and provides a simple way of looking up submissions by author
+		Submission::recordSubmission($reference, $user);
+		
 		print <<END;
 <p>Dear $firstName,</p>
-<p>thank you for your submission "$title" ($uploadedSize kB).</p>
+<p>Thank you for your submission "$title" ($uploadedSize kB).</p>
 	<dd>Track: $trackTitle</dd>
 	<dd>Reference number: $reference</dd>
 END
 	} else {
 		print <<END;
 <p>Dear $firstName,</p>
-<p>thank you for your updated submission "$title" ($uploadedSize kB).</p>
+<p>Thank you for your updated submission "$title" ($uploadedSize kB).</p>
 	<dd>Track: $trackTitle</dd>
 	<dd>Reference number: $reference</dd>
 	<dd>Reason for update: $reason</dd>
@@ -622,6 +628,9 @@ END
 # Recover the password for a submission. Send to the contact author's email.
 #
 # $reference is the reference number of the submission
+#
+# TODO: no longer storing raw password
+# this function needs to be replaced by a password reset option 
 sub sendPasswordForReference {
 	my ($reference) = @_;
 	

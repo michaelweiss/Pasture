@@ -228,7 +228,7 @@ sub handleProfile {
 	# TODO: check that user name is a single word, which may contain numbers
 	
 	# check whether this user name is taken already
-	Assert::assertTrue(! Password::retrieveUserPassword($user),
+	Assert::assertTrue(! Password::existsUser($user),
 		"This user name already exists. Please select a different name");
 		
 	# check whether the passwords match
