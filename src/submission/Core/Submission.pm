@@ -39,7 +39,7 @@ sub lookupSubmissionsByAuthor {
 	my @references;
 	Lock::lock("data", "submissions");
 	open(LOG, "data/submissions.dat") ||
-		Audit::handleError("Could not lookup submissions for author");
+		return @references;
 	while (<LOG>) {
 		if (/^(\d+)\t$user$/) {
 			push(@references, $1); 

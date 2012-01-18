@@ -214,7 +214,7 @@ END
 	Format::createTextWithTitle("Title (*)", 
 		"Title of your submission", "title", 60, $q_saved->param("title"));
 	Format::createTextAreaWithTitle("Authors (*)", 
-		"Enter author (first and last name) on a separate line", "authors", 50, 4,
+		"Enter each author (first and last name) on a separate line", "authors", 50, 4,
 		$q_saved->param("authors"));
 	Format::createTextWithTitle("Contact author (*)", 
 		"Name (first and last name)", "contact_name", 60, $q_saved->param("contact_name"));

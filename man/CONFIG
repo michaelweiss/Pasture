@@ -3,10 +3,10 @@ You should be in the src/submission directory.
 
 Order in which files should be created or edited:
 
-1. Edit config.dat in data
-2. Edit html templates in data/html
-3. Edit list of pc members
-4. Edit .htaccess file in europlop2012 
+1. Edit .htaccess file in europlop2012 
+2. Edit config.dat in data
+3. Edit html templates in data/html
+4. Edit list of pc members
 5. Set permissions for all scripts to 755
 6. Create data/records directory and set permission to 755
 
@@ -25,3 +25,98 @@ purpose: list of PC members
 format: name, organization, country, email
 Prefix chair names with a *, as in: *Michael Weiss
 
+New install:
+Note: install directory is the main directory for the conference (eg europlop/europlop2012)
+
+1. Create a submission directory under install directory (permissions should be 755)
+2. Create an .htaccess file in install directory (initially, rules for updating the site should be turned on)
+3. Create a data directory in submission directory (permissions should be 755)
+4. Create directories mail, records, screen, shepherd, and decision in data directory (permissions should be 755)
+5. Copy the submission/data/html directory into the data directory (contains page templates) 
+6. Copy the submission/images and submission/styles directories into the submission directory (contains banner image and styles)
+7. Create a papers directory in the submission directory (permissions should be 755)
+8. Copy the Core directory into the submission directory (contains the libraries used by the scripts)
+9. Copy the scripts (gate.cgi, submit.cgi, admin.cgi, shepherd.cgi) into the submission directory (permissions should be 755)
+10. Copy the mail.php and mail_no_cc.php scripts into the submission directory (permissions should be 755)
+
+Configure the system:
+TODO: most of this should be configurable through and admin interface
+TODO: match emails to internal user ids in the system
+
+1. Edit the config.dat file in the submission/data directory
+   The default file creates a test configuration and debug mode is turned on
+   
+2. Set debug to 1 (on) or 0 (off)
+debug=1
+
+3. Set the conference name
+conference=EuroPLoP 2012
+
+4. Set the URL for the submission site
+url=http://www.hillside.net/europlop/europlop2012/submission
+
+5. Enter the names and emails of the chairs
+program_chair=Alice White
+program_chair_email=alice@example.com
+conference_chair=Bob Miller
+conference_chair_email=bob@example.com
+focus_group_chair=Carl Smith
+focus_group_chair_email=carl@example.com
+web_chair=Dean James
+web_chair_email=dean@example.com
+
+6. Set the program chair title
+program_chair_title=Program Chair
+
+7. Enter the track titles and chair emails
+track_1=Pattern papers
+track_1_chair_email=alice@example.com
+track_2=Papers on applying patterns
+track_2_chair_email=alice@example.com
+track_3=Focus group proposals
+track_3_chair_email=alice@example.com
+focus_group_track=3
+
+8. Set the secret (for generating tokens) and salt (for hashing passwords)
+secret=secret
+salt=pepper
+
+9. Set submission stage
+   Stages can be configured through a number of flags
+   Initially, you want the site to be open for new submissions
+   Use 1 to turn a flag on, 0 to turn it off
+submission_open=1
+screen_open=0
+pc_can_screen_all=0
+
+shepherd_password=sheep
+shepherd_submission_open=0
+shepherding_open=0
+second_draft_due_date=April 1
+shepherding_decisions_date=May 1
+pc_can_view_all=0
+
+early_registration_open=1
+early_registration_date=June 1
+early_registration_fee=500
+late_registration_fee=600
+registration_closed=0
+
+10. Configure workshops (to be filled out later)
+schedule_open=0
+final_submissions_due=July 1
+workshops_url=
+workshops_spreadsheet=data/workshops.dat
+workshop_a_leader=Alice White
+workshop_a_name=A
+workshop_b_leader=Bob Miller
+workshop_b_name=B
+workshop_c_leader=Carl Smith
+workshop_c_name=C
+workshop_d_leader=Dean James
+workshop_d_name=D
+workshop_e_leader=Natalie Wood
+workshop_e_name=E
+
+
+Finally, copy the config.dat file into the data directory
