@@ -32,6 +32,10 @@ sub setUser {
 	my %sessions;
 	dbmopen(%sessions, "data/sessions", 0666) ||
 		::handleError("Internal: cannot open session database");
+		
+	# if user and role already set, strip from session
+	$sessions{$session} =~ s/:.+//;
+	
 	$sessions{$session} = $sessions{$session} . ":" . $user . ":" . $role;
 	_unlock("data", "sessions");
 	return $session;	

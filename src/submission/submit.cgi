@@ -20,6 +20,7 @@ use Core::Review;
 use Core::User;
 use Core::Contact;
 use Core::Submission;
+use Core::Submission;
 
 my $LOCK = 2;
 my $UNLOCK = 8;
@@ -35,6 +36,7 @@ our $CONFERENCE_CHAIR = $config->{"conference_chair"};
 our $WEB_CHAIR = $config->{"web_chair"};
 our $WEB_CHAIR_EMAIL = $config->{"web_chair_email"};
 our $CONFERENCE = $config->{"conference"};
+our $CONFERENCE_ID = $config->{"conference_id"};
 our $SUBMISSION_OPEN = $config->{"submission_open"};
 our $MULTI_TRACK = $config->{"multi_track"};
 our $baseUrl = $config->{"url"};
@@ -334,6 +336,11 @@ sub handleSubmitConfirmed {
 		# while information is available from full submission records, creating this index will be 
 		# more efficient, and provides a simple way of looking up submissions by author
 		Submission::recordSubmission($reference, $user);
+		
+		# add user as author on first submission
+		unless (Role::hasRole($user, $CONFERENCE_ID, "author")) {
+			Role::addRole($user, $CONFERENCE_ID, "author");
+		}
 		
 		print <<END;
 <p>Dear $firstName,</p>

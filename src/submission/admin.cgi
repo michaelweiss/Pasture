@@ -15,6 +15,7 @@ use Core::Access;
 use Core::Shepherd;
 use Core::Review;
 # use Core::Register;
+use Core::Role;
 
 my $LOCK = 2;
 my $UNLOCK = 8;
@@ -27,6 +28,7 @@ our $script = "admin.cgi";
 our $config = Serialize::getConfig();
 our $WEBCHAIR_EMAIL = $config->{"web_chair_email"};
 our $CONFERENCE = $config->{"conference"};
+our $CONFERENCE_ID = $config->{"conference_id"};
 our $baseUrl = $config->{"url"};
 
 BEGIN {
@@ -97,10 +99,10 @@ END
 }
 
 sub handleMenu {
-	# DONE: check that this is a valid session id
-	Assert::assertTrue(Session::check($q->param("session")), 
+	my $session = $q->param("session");
+	Assert::assertTrue(Session::check($session), 
 		"Session expired. Please sign in first.");
-		
+	
 	my ($user, $role) = Session::getUserRole($q->param("session"));	
 	unless ($user && $role) {
 		# TODO: what you really want to is use the generalized access control
@@ -117,18 +119,42 @@ sub handleMenu {
 
 	Format::createHeader("Admin > Menu");
 	
-	my $session = $q->param("session");
 	print <<END;
+	<div id="widebox">
+	<p>Here is what you can do:</p>
+
 	<ul>
 		<li><a href="$script?action=view_submissions&session=$session">View submissions</a></li>
 		<li><a href="$script?action=authors&session=$session">View authors</a></li>
 		<li><a href="$script?action=pc&session=$session">View PC members</a></li>
 		<li><a href="$script?action=shepherds&session=$session">View shepherds</a></li>
+	<!--
 		<li><a href="admin.cgi?action=participants&session=$session">View participants</a></li>
 		<li><a href="admin.cgi?action=participants&session=$session&format=csv">View participants as CSV list</a></li>
+	-->
 	</ul>
 END
 	
+	# TODO: put this code into a shared library
+	print <<END;
+	<ul>
+		<li>Change role to:
+END
+	
+	my @roles = Role::getRoles($user, $CONFERENCE_ID);
+	foreach (@roles) {
+		unless ($_ eq $role) {
+			print " <a href=\"$baseUrl/gate.cgi?action=change_role&session=$session&role=$_\">$_</a>";	
+		}
+	}
+	print "</li>\n";
+	
+	print <<END;
+		<li>Change conference</li>
+	</ul>
+	</div>
+END
+
 	Format::createFooter();
 }
 
@@ -145,6 +171,9 @@ sub handleViewSubmissions {
 	Format::startForm("post", "submissions");
 	Format::createHidden("session", $q->param("session"));
 	
+	print <<END;
+	<div id="widebox">
+END
 	Format::createRadioButtonsWithTitle("View submissions to which track?", 
 		"Desired track, or all", "track",
 		"1", $config->{"track_1"},
@@ -155,13 +184,17 @@ sub handleViewSubmissions {
 		
 	Format::createCheckboxesWithTitleOnOneLine("Apply filters", 
 		"Select all filters that are applicable", "filter",
-		"current", "Show current versions",
-		"csv", "Export to .csv format",
-		"tags", "Show keywords (only in .csv)",
+		"current", "Only current versions",
+		"csv", "Export as CSV list",
+		"tags", "Show keywords",
 #		"other", "Do something else",
 		"current"
 	);
 	Format::endForm("View");
+	
+	print <<END;
+	</div>
+END
 	
 	Format::createFooter();
 }

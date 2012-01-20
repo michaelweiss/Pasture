@@ -19,6 +19,7 @@ use Core::Review;
 use Core::User;
 use Core::Contact;
 use Core::Submission;
+use Core::Role;
 use Core::Audit;
 use Core::Debug;
 
@@ -29,6 +30,7 @@ our $config = Serialize::getConfig();
 our $WEB_CHAIR = $config->{"web_chair"};
 our $WEB_CHAIR_EMAIL = $config->{"web_chair_email"};
 our $CONFERENCE = $config->{"conference"};
+our $CONFERENCE_ID = $config->{"conference_id"};
 our $SUBMISSION_OPEN = $config->{"submission_open"};
 our $SHEPHERD_SUBMISSION_OPEN = $config->{"shepherd_submission_open"};
 our $baseUrl = $config->{"url"};
@@ -92,45 +94,59 @@ END
 }
 
 # Handle menu request
-sub handleMenu {
-	my $user, $password;
-	my $role;
+sub handleMenu {	
+	my $session = $q->param("session");
+	my ($user, $role) = Session::getUserRole($session);	
 	
-	Assert::assertNotEmpty("user", "Need to enter a user name");
-	Assert::assertNotEmpty("password", "Need to enter a password");
-
-	$user = $q->param("user");
-	$password = $q->param("password");
+	unless ($user && $role) {
+		Assert::assertNotEmpty("user", "Need to enter a user name");
+		Assert::assertNotEmpty("password", "Need to enter a password");
+	
+		$user = $q->param("user");
+		my $password = $q->param("password");
+			
+		$role = checkPassword($user, $password);
+		Assert::assertTrue($role, "User name and password do not match");
 		
-	$role = checkPassword($user, $password);
-	Assert::assertTrue($role, "User name and password do not match");
+		$session = Session::create(Session::uniqueId(), $timestamp);
+		Session::setUser($session, $user, $role);
+	}
 	
-	my $session = Session::create(Session::uniqueId(), $timestamp);
-	Session::setUser($session, $user, $role);
-	
-	# fake getting roles from user profile
-	my $roles;
-	$roles{"author"} = 1;
-
 	my %profile = User::loadUser($user);
 	my %contact = Contact::loadContact($user);
 	
 	Format::createHeader("Gate > Menu");
 	
 	print <<END;
-<p>Dear $profile{"firstName"}, you are logged into the $CONFERENCE submission site.</p>
+<p>Dear $profile{"firstName"}, you are logged into the $CONFERENCE submission site as <b>$role</b>.</p>
 
 <div id="widebox">
 <p>Here is what you can do:</p>
 END
 
-	if ($roles{"author"}) {
+	if ($role eq "author") {
 		authorMenu($session, $user);
+	} elsif ($role eq "admin") {
+		adminMenu($session, $user);
+	} else {
+		print "<p>Role is <$role></p>";
 	}
 
 	print <<END;
 <ul>
-	<li>Change role</li>
+	<li>Change role to:
+END
+	
+	my @roles = Role::getRoles($user, $CONFERENCE_ID);
+	my $first = 1;
+	foreach (@roles) {
+		unless ($_ eq $role) {
+			print " <a href=\"$baseUrl/$script?action=change_role&session=$session&role=$_\">$_</a>";	
+		}
+	}
+	print "</li>\n";
+	
+	print <<END;
 	<li>Change conference</li>
 </ul>
 </div>
@@ -200,6 +216,21 @@ END
 END
 
 	Format::createFooter();
+}
+
+# Handle change role request
+sub handleChangeRole {
+	my $session = $q->param("session");
+	my ($user, $role) = Session::getUserRole($session);	
+	
+	# user can only switch into new role, if s/he has that role
+	my $newRole = $q->param("role");
+	Assert::assertTrue(Role::hasRole($user, $CONFERENCE_ID, $newRole),
+		"No privileges to change to this role");
+	Session::setUser($session, $user, $newRole);
+	
+	# redirect to handle menu request
+	print $q->redirect(-uri => "$baseUrl/$script?action=menu&session=$session");
 }
 
 # Handle profile request
@@ -300,6 +331,22 @@ END
 	</ul>
 END
 }
+
+sub adminMenu {
+	my ($session, $user) = @_;
+	print <<END;
+	<ul>
+		<li><a href="admin.cgi?action=view_submissions&session=$session">View submissions</a></li>
+		<li><a href="admin.cgi?action=authors&session=$session">View authors</a></li>
+		<li><a href="admin.cgi?action=pc&session=$session">View PC members</a></li>
+		<li><a href="admin.cgi?action=shepherds&session=$session">View shepherds</a></li>
+	<!--
+		<li><a href="admin.cgi?action=participants&session=$session">View participants</a></li>
+		<li><a href="admin.cgi?action=participants&session=$session&format=csv">View participants as CSV list</a></li>
+	-->
+	</ul>
+END
+}
 	
 # Main dispatcher
 
@@ -314,6 +361,8 @@ if ($action eq "sign_in") {
 	handleSignUp();
 } elsif ($action eq "profile") {
 	handleProfile();
+} elsif ($action eq "change_role") {
+	handleChangeRole();
 } elsif ($action eq "send_login") {
 	handleSendLogin();
 } else {
