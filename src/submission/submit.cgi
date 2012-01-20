@@ -20,7 +20,7 @@ use Core::Review;
 use Core::User;
 use Core::Contact;
 use Core::Submission;
-use Core::Submission;
+use Core::Role;
 
 my $LOCK = 2;
 my $UNLOCK = 8;
