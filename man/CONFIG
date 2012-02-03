@@ -6,24 +6,14 @@ Order in which files should be created or edited:
 1. Edit .htaccess file in europlop2012 
 2. Edit config.dat in data
 3. Edit html templates in data/html
-4. Edit list of pc members
-5. Set permissions for all scripts to 755
-6. Create data/records directory and set permission to 755
+4. Set permissions for all scripts to 755
+5. Create data/records directory and set permission to 755
 
 Initial set of files:
 
 data/config.dat
 data/html/header.html
 data/html/footer.html
-data/password.dat
-data/reference.dat
-
-Tools:
-
-0. Prepare file: pc.txt
-purpose: list of PC members
-format: name, organization, country, email
-Prefix chair names with a *, as in: *Michael Weiss
 
 New install:
 Note: install directory is the main directory for the conference (eg europlop/europlop2012)
@@ -40,8 +30,8 @@ Note: install directory is the main directory for the conference (eg europlop/eu
 10. Copy the mail.php and mail_no_cc.php scripts into the submission directory (permissions should be 755)
 
 Configure the system:
-TODO: most of this should be configurable through and admin interface
-TODO: match emails to internal user ids in the system
+TODO: most of this should be configurable through the admin interface
+DONE: match emails to internal user ids in the system
 
 1. Edit the config.dat file in the submission/data directory
    The default file creates a test configuration and debug mode is turned on
@@ -117,6 +107,5 @@ workshop_d_leader=Dean James
 workshop_d_name=D
 workshop_e_leader=Natalie Wood
 workshop_e_name=E
-
 
 Finally, copy the config.dat file into the data directory
