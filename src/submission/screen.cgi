@@ -16,9 +16,6 @@ use Core::Assert;
 use Core::Screen;
 use Core::Review;
 
-my $LOCK = 2;
-my $UNLOCK = 8;
-
 our $q = new CGI;
 our $timestamp = time();
 
@@ -28,6 +25,7 @@ our $config = Serialize::getConfig();
 our $WEB_CHAIR_EMAIL = $config->{"web_chair_email"};
 our $WEB_CHAIR = $config->{"web_chair"};
 our $CONFERENCE = $config->{"conference"};
+our $CONFERENCE_ID = $config->{"conference_id"};
 our $baseUrl = $config->{"url"};
 
 BEGIN {
@@ -46,23 +44,9 @@ BEGIN {
 # Handlers
 
 sub handleSubmissions {
-	# TODO: write function that does all this (including user and password checking)
-	my $session = $q->param("session");
-	my $sessionInfo = Session::check($session);
-	Assert::assertTrue($sessionInfo, 
-		"Session expired. Please sign in first.");
+	my $session = checkCredentials();
+	my ($user, $role) = Session::getUserRole($session);	
 		
-	my ($user, $role) = $sessionInfo =~ /:(.+?):(.+)/;	
-	unless ($user) {
-		unless ($role = Review::authenticate($q->param("user"), $q->param("password"))) {
-		 	handleError("Please check that you entered the correct user name and password");
-		}
-		Session::setUser($q->param("session"), $q->param("user"), $role);
-		$user = $q->param("user");
-	}
-	Assert::assertTrue($role eq "pc" || $role eq "admin",
-		"Only chairs and PC members can perform this action.");
-
 	# if vote, user has decided on a rank
 	# if only reason, user has not assessed but wants like their current reason stored
 	if ($q->param("vote") || $q->param("reason")) {
@@ -71,7 +55,13 @@ sub handleSubmissions {
 	}
 	my $votes = Screen::votes();
 	
-	Format::createHeader("Screen > Submissions", "$CONFERENCE Submissions", "js/validate.js");	
+	Format::createHeader("Screen > Submissions", "", "js/validate.js");	
+	
+	print <<END;
+	<div id="widebox">	
+	<p><a href="gate.cgi?action=menu&session=$session">Menu</a></p>
+	</div>
+END
 	
 	# changed votes to format suggested by allan:
 	# 1 - I'm glad this paper was submitted, it's a joy!
@@ -184,24 +174,16 @@ END
 END
 		}
 	} 
-	
-	Format::startForm("post", "sign_out");
-	Format::createHidden("session", $q->param("session"));
-	Format::endForm("Leave review area");
+
 	Format::createFooter();
 }
 
 sub handleVote {
-	my $sessionInfo = Session::check($q->param("session"));
-	Assert::assertTrue($sessionInfo, 
-		"Session expired. Please sign in first.");
-		
-	my ($user, $role) = $sessionInfo =~ /:(.+?):(.+)/;	
-	Assert::assertTrue($user && $role, 
-		"Session expired. Please sign in first.");
+	my $session = checkCredentials();
+	my ($user, $role) = Session::getUserRole($session);	
 
 	my $reference = $q->param("reference");
-	Format::createHeader("Screen > Vote", "Vote on submission $reference", "js/validate.js");	
+	Format::createHeader("Screen > Vote", "", "js/validate.js");	
 	
 	Format::startForm("post", "submissions", "return checkVoteForm()");
 	Format::createHidden("session", $q->param("session"));
@@ -295,13 +277,12 @@ END
 }
 
 sub handleSignOut {
-	my $session = $q->param("session");
-	my $sessionInfo = Session::check($session);
-	Assert::assertTrue($sessionInfo, 
-		"Session expired. Please sign in first.");
+	my $session = checkCredentials();
+	my ($user, $role) = Session::getUserRole($session);	
+
 	Session::invalidate($session);
 	
-	Format::createHeader("Screen > Thanks", "Thanks for entering your reviews", "js/validate.js");
+	Format::createHeader("Screen > Thanks", "", "js/validate.js");
 	Format::createFooter();
 }
 
@@ -310,8 +291,6 @@ sub handleDownload {
 	# DONE: check that this is a valid session id
 	# DONE: use token-based authentication instead (not user-based)
 	# TODO: implement session timeout
-#	Assert::assertTrue(Session::check($q->param("session")), 
-#		"Session expired. Please sign in first.");
 
 	my ($label) = $q->param("label") =~ /^(\d+_\d+)$/;
 #	Assert::assertTrue(Access::check($q->param("token"), $label),

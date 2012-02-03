@@ -2,16 +2,17 @@ package Screen;
 
 use lib '.';
 use Core::Format;
+use Core::Lock;
 
 sub saveVote {
 	my ($timestamp, $user, $reference, $vote, $reason) = @_;
 	$reason =~ s/\n/ /g;
-	_lock("data/screen", "votes");
+	Lock::lock("data/screen", "votes");
 	open(LOG, ">>data/screen/votes.dat") ||
 		::handleError("Could not save vote");
 	print LOG "$timestamp:$user:$reference:$vote:$reason\n";
 	close(LOG);
-	_unlock("data/screen", "votes");
+	Lock::unlock("data/screen", "votes");
 }
 
 # TODO: refactor to getAllReviews
@@ -20,7 +21,7 @@ sub votes {
 	unless (-e "data/screen/votes.dat") {
 		return $votes;	# before first vote, not votes file exists
 	}
-	_lock("data/screen", "votes");
+	Lock::lock("data/screen", "votes");
 	open(LOG, "data/screen/votes.dat") ||
 		::handleError("Could not read votes");
 	my ($timestamp, $user, $reference, $vote, $reason);
@@ -38,7 +39,7 @@ sub votes {
 		}
 	}
 	close(LOG);
-	_unlock("data/screen", "votes");
+	Lock::unlock("data/screen", "votes");
 	return $votes;
 }
 
@@ -48,7 +49,7 @@ sub getReviews {
 	unless (-e "data/screen/votes.dat") {
 		return $reviews;	# before first vote, not votes file exists
 	}
-	_lock("data/screen", "votes");
+	Lock::lock("data/screen", "votes");
 	open(LOG, "data/screen/votes.dat") ||
 		::handleError("Could not read votes");
 	my ($timestamp, $user, $_reference, $vote, $reason);
@@ -67,14 +68,14 @@ sub getReviews {
 		}
 	}
 	close(LOG);
-	_unlock("data/screen", "votes");
+	Lock::unlock("data/screen", "votes");
 	return $reviews;
 }
 
 sub getAssignments {
 	my ($user) = @_;
 	open (ASSIGNMENTS, "data/screen/assignments.dat") ||
-		die "Internal: could not read assignments";
+		return ();
 	while (<ASSIGNMENTS>) {
 		chomp;
 		my ($fooUser, @submissions) = split(/, /);
@@ -85,19 +86,6 @@ sub getAssignments {
 	}
 	close (ASSIGNMENTS);
 	return ();
-}
-	
-# Utilitites
-
-sub _lock {
-	my ($directory, $resource) = @_;
-	open(LOCK, ">$directory/$resource.lock");
-	flock(LOCK, $LOCK);
-}
-
-sub _unlock {
-	my ($directory, $resource) = @_;
-	unlink("$directory/$resource.lock");
 }
 
 1;

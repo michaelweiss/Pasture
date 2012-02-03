@@ -98,6 +98,10 @@ sub handleViewSubmissions {
 			
 	Format::createHeader("Admin > Submissions");
 	
+	print <<END;
+	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
+END
+
 	# form to view submissions to a given track
 	Format::startForm("post", "submissions");
 	Format::createHidden("session", $q->param("session"));
@@ -137,10 +141,11 @@ sub handleSubmissions {
 	
 	Format::createHeader("Admin > Submissions", "", "js/tablesort.js");
 	
+	print <<END;
+	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
+END
+
 	Format::createFreetext("<h2>" . $config->{"track_" . $track} . "</h2>");
-	
-	Format::startForm("post", "menu");
-	Format::createHidden("session", $q->param("session"));
 	
 	my %filters = map { $_ => 1 } $q->param("filter");
 
@@ -226,7 +231,6 @@ END
 #		print "</pre>\n";
 	}
 	
-	Format::endForm("Menu");
 	Format::createFooter();
 }
 
@@ -235,15 +239,21 @@ sub handleAuthors {
 	
 	Format::createHeader("Admin > Authors");
 	
-	Format::startForm("post", "menu");
-	Format::createHidden("session", $q->param("session"));
+	print <<END;
+	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
+END
 
 	my @records;
 	@records = Records::listCurrent();
 
 	my $emails;
 	
-	print "<table>\n";
+	print <<END;
+	<div id="widebox">
+		<p>
+			<table>
+END
+
 	foreach $label (sort @records) {
 		if ($label =~ /^(\d+)_(\d+)$/) {
 			my $reference = $2;
@@ -267,14 +277,14 @@ END
 			}
 		}
 	}
-	print "</table>\n";
-	
 	print <<END;
+			</table>
+		</p>
+	</div>
+
 	<p><a href="mailto:$emails">Send email to all authors</a></p>
 END
 	
-	Format::endForm("Menu");
-
 	Format::createFooter();
 }
 
@@ -284,13 +294,19 @@ sub handlePc {
 		
 	Format::createHeader("Admin > PC");
 	
-	Format::startForm("post", "menu");
-	Format::createHidden("session", $q->param("session"));
+	print <<END;
+	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
+END
 
 	my @pcMembers = Review::getProgramCommitteeMembers();
 	my $emails;	
 
-	print "<table>\n";
+	print <<END;
+	<div id="widebox">
+		<p>
+			<table>
+END
+
 	foreach my $user (@pcMembers) {
 		# TODO: get email
 		my $email = Review::getReviewerEmail($user);
@@ -308,13 +324,14 @@ sub handlePc {
 	</tr>
 END
 	}
-	print "</table>\n";
 	
 	print <<END;
+			</table>
+		</p>
+	</div>
+
 	<p><a href="mailto:$emails">Send email to all PC members</a></p>
 END
-
-	Format::endForm("Menu");
 
 	Format::createFooter();
 }
@@ -324,13 +341,19 @@ sub handleShepherds {
 		
 	Format::createHeader("Admin > Shepherds");
 	
-	Format::startForm("post", "menu");
-	Format::createHidden("session", $q->param("session"));
+	print <<END;
+	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
+END
 
 	my $assignments = Shepherd::assignments();
 	my $emails;	
 
-	print "<table>\n";
+	print <<END;
+	<div id="widebox">
+		<p>
+			<table>
+END
+
 	foreach $assignment (values %$assignments) {
 		# TODO: assignments linked to users, not emails
 		my $email = $assignment->{"shepherd"}; 
@@ -348,13 +371,14 @@ sub handleShepherds {
 	</tr>
 END
 	}
-	print "</table>\n";
-	
+
 	print <<END;
+			</table>
+		</p>
+	</div>
+
 	<p><a href="mailto:$emails">Send email to all shepherds</a></p>
 END
-	
-	Format::endForm("Menu");
 
 	Format::createFooter();
 }
