@@ -3,6 +3,7 @@ package Screen;
 use lib '.';
 use Core::Format;
 use Core::Lock;
+use Core::Assign;
 
 sub saveVote {
 	my ($timestamp, $user, $reference, $vote, $reason) = @_;
@@ -72,20 +73,10 @@ sub getReviews {
 	return $reviews;
 }
 
+# TODO: find all references, and point them to Assign module
 sub getAssignments {
 	my ($user) = @_;
-	open (ASSIGNMENTS, "data/screen/assignments.dat") ||
-		return ();
-	while (<ASSIGNMENTS>) {
-		chomp;
-		my ($fooUser, @submissions) = split(/, /);
-		if ($user eq $fooUser) {
-			close (ASSIGNMENTS);
-			return @submissions;
-		}
-	}
-	close (ASSIGNMENTS);
-	return ();
+	return Assign::getAssignments($user);
 }
 
 1;

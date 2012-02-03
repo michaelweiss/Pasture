@@ -5,6 +5,7 @@ use URI::Escape ('uri_escape');
 
 use lib '.';
 use Core::Assert;
+use Core::Audit;
 use Core::Format;
 use Core::Serialize;
 use Core::Serialize::Records;
@@ -529,7 +530,7 @@ END
 sub handleError {
 	my ($error) = @_;
 	# DONE: log errors with error details
-	addToErrorLog($error);
+	Audit::addToErrorLog($error);
 	Format::createHeader("Error");
 	my $uriEncodedError = uri_escape($error);
 	print <<END;
@@ -538,33 +539,6 @@ sub handleError {
 END
 	Format::createFooter();
 	exit(0);
-}
-
-# Audit
-
-sub trace {
-	my ($action) = @_;
-	my $remote_host = $q->remote_host();
-	open(LOG, ">>data/log.dat") ||
-		handleError("Could not log action: $ip, $timestamp, $action");
-	flock(LOG, $LOCK);
-	print LOG "$remote_host, $timestamp, review.$action\n";
-	flock(LOG, $UNLOCK);
-	close(LOG);
-}
-
-sub addToErrorLog {
-	my ($error) = @_;
-	my $action = $q->param("action") || "unknown";
-	my $remote_host = $q->remote_host();
-	my $user_agent = $q->user_agent();
-	my $email = $q->param("email") || "NA";
-	open(LOG, ">>data/errors.dat") ||
-		return;
-	flock(LOG, $LOCK);
-	print LOG "$remote_host|$timestamp|submit.$action|$user_agent|$email|$error\n";
-	flock(LOG, $UNLOCK);
-	close(LOG);	
 }
 
 # Utilities
@@ -601,7 +575,7 @@ sub getRecord {
 
 my $action = $q->param("action") || "menu";
 Format::sanitizeInput();
-trace($action);
+Audit::trace($action);
 if ($action eq "menu") {
 	handleMenu();
 } elsif ($action eq "view_submissions") {
