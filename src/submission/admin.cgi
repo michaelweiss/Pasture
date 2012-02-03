@@ -48,74 +48,9 @@ BEGIN {
  
 # Handlers
 
-sub handleSignIn {
-	Format::createHeader("Admin > Sign in");
-	
-	my $disabled = $config->{"shepherd_submission_open"} || 
-		$config->{"shepherding_open"} ? "" : "disabled";
-		
-#	print <<END;
-#<h3>Log in as</h3>
-#<p>
-#<input name="role" type="radio" value="author" 
-#	onClick="document.location='$baseUrl/submit.cgi'"/> Author &nbsp;
-#<input name="role" type="radio" value="shepherd"
-#	onClick="document.location='$baseUrl/shepherd.cgi'" $disabled/> Shepherd &nbsp;
-#<input name="role" type="radio" value="pc" 
-#	onClick="document.location='$baseUrl/screen.cgi'"/> PC Member (Screening) &nbsp;
-#<input name="role" type="radio" value="admin" checked
-#	onClick="document.location='$baseUrl/admin.cgi'"/> Chair &nbsp;
-#<input name="role" type="radio" value="participant"
-#	onClick="document.location='$baseUrl/register.cgi'"/> Participant
-#</p>
-#END
-
-	Format::startForm("post", "menu");
-	Format::createHidden("session", Session::create(Session::uniqueId(), $timestamp));
-		
-	# Format::createTextWithTitle("Sign in", "My user name is", "user", 20);
-	# Format::createPasswordWithTitle("", "My password is", "password", 20);
-	
-	print <<END;
-			<p>You need an administrator password to access this part of the site.</p>
-			
-			<table cellpadding="0" cellspacing="5">
-				<tr>
-					<td>Admin user name:</td>
-					<td width="10"></td>
-					<td><input name="user" type="text"/></td>
-				</tr><tr>
-					<td>Password:</td>
-					<td width="10"></td>
-					<td><input name="password" type="password"/></td>
-				</tr>
-			</table>
-END
-	
-	# DONE: replace "review page" by ...
-
-	Format::endForm("Sign in");
-	Format::createFooter();
-}
-
 sub handleMenu {
-	my $session = $q->param("session");
-	Assert::assertTrue(Session::check($session), 
-		"Session expired. Please sign in first.");
-	
-	my ($user, $role) = Session::getUserRole($q->param("session"));	
-	unless ($user && $role) {
-		# TODO: what you really want to is use the generalized access control
-		# mechanism that works with all roles, not just admin
-		Assert::assertTrue(checkPassword($q->param("user"), $q->param("password")),
-			"Please check that you entered the correct user name and password");
-		# using roles now: checkPassword only passes administrators
-		$user = $q->param("user");
-		$role = "admin";
-		Session::setUser($q->param("session"), $user, $role);
-	}
-	Assert::assertTrue($role eq "admin",
-		"You must be an admin user to access this site");
+	my $session = checkCredentials();
+	my ($user, $role) = Session::getUserRole($session);	
 
 	Format::createHeader("Admin > Menu");
 	
@@ -159,12 +94,8 @@ END
 }
 
 sub handleViewSubmissions {	
-	Assert::assertTrue(Session::check($q->param("session")), 
-		"Session expired. Please sign in first.");
-	my ($user, $role) = Session::getUserRole($q->param("session"));	
-	Assert::assertTrue($role eq "admin",
-		"You must be an admin user to access this site");
-		
+	my $session = checkCredentials();
+			
 	Format::createHeader("Admin > Submissions");
 	
 	# form to view submissions to a given track
@@ -200,13 +131,8 @@ END
 }
 
 sub handleSubmissions {
-	# DONE: check that this is a valid session id
-	Assert::assertTrue(Session::check($q->param("session")), 
-		"Session expired. Please sign in first.");
-	my ($user, $role) = Session::getUserRole($q->param("session"));	
-	Assert::assertTrue($role eq "admin",
-		"You must be an admin user to access this site");
-
+	my $session = checkCredentials();
+	
 	my ($track) = $q->param("track") =~ /(\d+)/;
 	
 	Format::createHeader("Admin > Submissions", "", "js/tablesort.js");
@@ -305,12 +231,8 @@ END
 }
 
 sub handleAuthors {	
-	Assert::assertTrue(Session::check($q->param("session")), 
-		"Session expired. Please sign in first.");
-	my ($user, $role) = Session::getUserRole($q->param("session"));	
-	Assert::assertTrue($role eq "admin",
-		"You must be an admin user to access this site");
-		
+	my $session = checkCredentials();
+	
 	Format::createHeader("Admin > Authors");
 	
 	Format::startForm("post", "menu");
@@ -339,7 +261,7 @@ sub handleAuthors {
 	<tr>
 		<td>$contactName</td>
 		<td width="10"></td>
-		<td>$contactEmail</td>
+		<td><a href="mailto:$contactEmail">$contactEmail</a></td>
 	</tr>
 END
 			}
@@ -358,24 +280,20 @@ END
 
 # handle request to list PC members
 sub handlePc {	
-	Assert::assertTrue(Session::check($q->param("session")), 
-		"Session expired. Please sign in first.");
-	my ($user, $role) = Session::getUserRole($q->param("session"));	
-	Assert::assertTrue($role eq "admin",
-		"You must be an admin user to access this site");
+	my $session = checkCredentials();	
 		
 	Format::createHeader("Admin > PC");
 	
 	Format::startForm("post", "menu");
 	Format::createHidden("session", $q->param("session"));
 
-	if (1) {
 	my @pcMembers = Review::getProgramCommitteeMembers();
 	my $emails;	
 
 	print "<table>\n";
-	foreach $user (@pcMembers) {
+	foreach my $user (@pcMembers) {
 		# TODO: get email
+		my $email = Review::getReviewerEmail($user);
 		unless ($emails) {
 			$emails = $email;
 		} else {
@@ -386,7 +304,7 @@ sub handlePc {
 	<tr>
 		<td>$name</td>
 		<td width="10"></td>
-		<td>$email</td>
+		<td><a href="mailto:$email">$email</a></td>
 	</tr>
 END
 	}
@@ -395,22 +313,14 @@ END
 	print <<END;
 	<p><a href="mailto:$emails">Send email to all PC members</a></p>
 END
-	} else {
-		print <<END;
-	<p>Oops. This feature is not yet available.</p>
-END
-	}
+
 	Format::endForm("Menu");
 
 	Format::createFooter();
 }
 
 sub handleShepherds {	
-	Assert::assertTrue(Session::check($q->param("session")), 
-		"Session expired. Please sign in first.");
-	my ($user, $role) = Session::getUserRole($q->param("session"));	
-	Assert::assertTrue($role eq "admin",
-		"You must be an admin user to access this site");
+	my $session = checkCredentials();	
 		
 	Format::createHeader("Admin > Shepherds");
 	
@@ -449,12 +359,8 @@ END
 }
 
 sub handleParticipants {	
-	Assert::assertTrue(Session::check($q->param("session")), 
-		"Session expired. Please sign in first.");
-	my ($user, $role) = Session::getUserRole($q->param("session"));	
-	Assert::assertTrue($role eq "admin",
-		"You must be an admin user to access this site");
-		
+	my $session = checkCredentials();
+	
 	Format::createHeader("Admin > Participants");
 	
 	Format::startForm("post", "menu");
@@ -509,10 +415,7 @@ END
 }
 
 sub handleDownload {
-	# DONE: check that this is a valid session id
 	# TODO: implement session timeout
-#	Assert::assertTrue(Session::check($q->param("session")), 
-#		"Session expired. Please <a href=\"$baseUrl/$script\">sign in</a> first.");
 
 	my ($label) = $q->param("label") =~ /^(\d+_\d+)$/;
 #	Assert::assertTrue(Access::check($q->param("token"), $label),
@@ -548,9 +451,7 @@ sub handleDownload {
 }
 
 sub handleLog {
-	# DONE: check that this is a valid session id
-#	Assert::assertTrue(Session::check($q->param("session")), 
-#		"Session expired. Please <a href=\"$baseUrl/$script\">sign in</a> first.");
+	my $session = checkCredentials();
 	
 	Format::createHeader("Log", "", "js/tablesort.js");
 
@@ -643,22 +544,23 @@ sub addToErrorLog {
 
 # Utilities
 
+sub checkCredentials {
+	my $session = $q->param("session");
+	Assert::assertTrue(Session::check($session), 
+		"Session expired. Please sign in first.");
+	my ($user, $role) = Session::getUserRole($q->param("session"));	
+	Assert::assertTrue($user, "You are not logged in");
+	Assert::assertTrue($role eq "admin",
+		"You must be an admin user to access this site");
+	return $session;
+}
+
 sub listOfRecords {
 	opendir DIR, "data/records" ||
     	::handleError("Internal: could not search submission records");
 	@records = readdir DIR;
     closedir DIR;
     return @records;
-}
-
-sub checkPassword {
-	my ($user, $password) = @_;
-	if ($user eq "europlop") {
-		if ($password eq $config->{"admin_password"}) {
-			return 1;
-		}
-	}
-	return 0;
 }
 
 sub getRecord {
@@ -670,27 +572,12 @@ sub getRecord {
     return $q_saved;
 }
 
-# TODO: align with submit.cgi#dumpRecord
-sub dumpRecord {
-	my ($q) = @_;
-	print "<hr/>\n";
-	print "<ul>\n";
-	foreach $name ($q->param()) {
-		my $value = $q->param($name);
-		print "<li>$name: $value</li>\n";
-	}
-	print "</ul>\n";
-	print "<hr/>\n";
-}
-
 # Main dispatcher
 
-my $action = $q->param("action") || "sign_in";
+my $action = $q->param("action") || "menu";
 Format::sanitizeInput();
 trace($action);
-if ($action eq "sign_in") {
-	handleSignIn();
-} elsif ($action eq "menu") {
+if ($action eq "menu") {
 	handleMenu();
 } elsif ($action eq "view_submissions") {
 	handleViewSubmissions();

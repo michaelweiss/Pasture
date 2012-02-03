@@ -12,6 +12,8 @@ use Core::Serialize::Records;
 use Core::Email;
 
 use Core::Role;
+use Core::Contact;
+use Core::User;
 
 our $config = Serialize::getConfig();
 our $WEB_CHAIR = $config->{"web_chair"};
