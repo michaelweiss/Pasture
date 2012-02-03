@@ -20,6 +20,7 @@ our $baseUrl = $config->{"url"};
 my $LOCK = 2;
 my $UNLOCK = 8;
 
+# deprecated
 sub authenticate {
 	my ($email, $password) = @_;
 	my $role = "";
@@ -138,6 +139,7 @@ sub abstractContainsTag {
 	return $abstract =~ $tag;
 }
 
+# deprecated
 sub addReviewer {
 	my ($email, $name, $role) = @_;
 	# DONE: guarantee that entries are unique
@@ -152,6 +154,7 @@ sub addReviewer {
 	_unlock("data", "reviewers");
 }
 
+# TODO: need to re-implement
 sub getReviewerName {
 	my ($email) = @_;
 	my $name = "";
@@ -169,6 +172,7 @@ sub getReviewerName {
 	return $name;
 }
 
+# TODO: need to re-implement
 sub getProgramCommitteeMembers {
 	my @reviewers;
 	_lock("data", "reviewers");
@@ -208,6 +212,7 @@ sub getReviewersForPaper {
 	return @reviewers;
 }
 
+# deprecated
 sub addRole {
 	my ($email, $password, $role) = @_;
 	# TODO: means that each user can only have one role (verify)
@@ -223,6 +228,7 @@ sub addRole {
 	_unlock("data", "roles");	
 }
 
+# deprecated
 sub getRole {
 	my ($email) = @_;	
 	my $role = "";
@@ -240,6 +246,7 @@ sub getRole {
 	return $role;
 }
 
+# deprecated
 sub getPassword {
 	my ($email) = @_;	
 	my $password = "";
@@ -257,6 +264,7 @@ sub getPassword {
 	return $password;
 }
 
+# deprecated
 # Recover the password for a submission. Send to the contact author's email.
 # $reference is the reference number of the submission
 sub sendPasswordForEmail {
@@ -301,6 +309,7 @@ END
 
 # Utilities
 
+# deprecated
 # TODO: throw error if unable to lock/unlock
 sub _lock {
 	my ($directory, $resource) = @_;
@@ -308,6 +317,7 @@ sub _lock {
 	flock(LOCK, $LOCK);
 }
 
+# deprecated
 sub _unlock {
 	my ($directory, $resource) = @_;
 	unlink("$directory/$resource.lock");

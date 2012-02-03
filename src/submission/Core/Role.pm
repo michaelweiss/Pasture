@@ -50,4 +50,20 @@ sub getRoles {
 	return @roles;
 }
 
+sub getUsersInRole {
+	my ($conference, $role) = @_;
+	my @users;
+	Lock::lock("data", "roles");
+	open(LOG, "data/roles.dat") ||
+		return @users;
+	while (<LOG>) {
+		if (/^(.+?)\t$conference\t$role$/) {	
+			push(@users, $1);
+		}
+	}
+	close(LOG);
+	Lock::unlock("data", "roles");	
+	return @users;
+}
+
 1;
