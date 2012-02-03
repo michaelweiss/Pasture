@@ -157,22 +157,12 @@ sub addReviewer {
 	_unlock("data", "reviewers");
 }
 
-# TODO: need to re-implement
+# DONE: need to re-implement
+# TODO: grep all uses and change email -> user
 sub getReviewerName {
-	my ($email) = @_;
-	my $name = "";
-	_lock("data", "reviewers");
-	open(REVIEWERS, "data/reviewers.dat") ||
-		Audit::handleError("Could not access reviewer file");
-	while (<REVIEWERS>) {
-		if (/^$email, (.+?),/) {
-			$name = $1;
-			last;
-		}	# lines that don't match are skipped
-	}
-	close(REVIEWERS);
-	_unlock("data", "reviewers");
-	return $name;
+	my ($user) = @_;
+	my %user = User::loadUser($user);
+	return $user{"firstName"} . " " . $user{"lastName"};
 }
 
 sub getReviewerEmail {
