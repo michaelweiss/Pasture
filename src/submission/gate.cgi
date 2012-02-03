@@ -139,8 +139,10 @@ END
 		authorMenu($session, $user);
 	} elsif ($role eq "admin") {
 		adminMenu($session, $user);
+	} elsif ($role eq "pc") {
+		pcMenu($session, $user);
 	} else {
-		print "<p>Role is <$role></p>";
+		print "<p>Oops, nothing at all in this role.</p>";
 	}
 
 	print <<END;
@@ -340,6 +342,19 @@ END
 END
 	}
 	print <<END;
+	</ul>
+END
+}
+
+sub pcMenu {
+	my ($session, $user) = @_;
+	print <<END;
+	<ul>
+		<li><a href="screen.cgi?action=submissions&session=$session">Screen initial submissions</a></li>
+		<!-- li>Screen initial submissions (closed)</li> -->
+		<li><a href="shepherd.cgi?action=shepherded_papers&user=$user&role=pc&session=$session">View all papers you are supervising as a PC member</a></li>
+		<li><a href="shepherd.cgi?action=shepherded_papers&session=$session">View all papers being shepherded</a></li>
+		<li><a href="shepherd.cgi?action=assignments&session=$session">Screen updated submissions</a></li>
 	</ul>
 END
 }
