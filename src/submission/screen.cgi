@@ -58,9 +58,7 @@ sub handleSubmissions {
 	Format::createHeader("Screen > Submissions", "", "js/validate.js");	
 	
 	print <<END;
-	<div id="widebox">	
-	<p><a href="gate.cgi?action=menu&session=$session">Menu</a></p>
-	</div>
+	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
 	
 	# changed votes to format suggested by allan:
@@ -185,6 +183,10 @@ sub handleVote {
 	my $reference = $q->param("reference");
 	Format::createHeader("Screen > Vote", "", "js/validate.js");	
 	
+	print <<END;
+	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
+END
+
 	Format::startForm("post", "submissions", "return checkVoteForm()");
 	Format::createHidden("session", $q->param("session"));
 	Format::createHidden("reference", $reference);

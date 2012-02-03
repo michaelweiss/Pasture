@@ -201,6 +201,13 @@ sub handleSubmissions {
 		
 	Format::createHeader("Bids", "", "js/validate.js");
 	
+		print <<END;
+	<p>Oops, this feature is unavailable at this time.</p>
+END
+
+	Format::createFooter();
+	return;
+	
 	Format::createFreetext("Please bid for the papers you wish to shepherd. If you provide us with multiple options, we can assign you a paper even if your top preference has already been assigned to somebody else.");
 	Format::createFreetext("If you only want to submit a specific paper, just bid once and email the chair that you really want that paper.");
 	Format::createFreetext("If you had previously made a bid for a paper, your old bid will be shown in <font color=green>green</font>.");
@@ -351,7 +358,25 @@ END
 
 # show submissions currently shepherded
 sub handleShepherdedPapers {
+	my $session = $q->param("session");
+	my $sessionInfo = Session::check($session);
+	Assert::assertTrue($sessionInfo, 
+		"Session expired. Please sign in first.");
+		
+	my ($user, $role) = $sessionInfo =~ /:(.+?):(.+)/;	
+
 	Format::createHeader("Shepherded Papers", "", "");
+	
+print <<END;
+	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
+END
+
+	print <<END;
+	<p>Oops, this feature is unavailable at this time.</p>
+END
+
+	Format::createFooter();
+	return;
 	
 	my $user = $q->param("user");
 	unless ($user) { # show all
@@ -480,6 +505,10 @@ sub handleSelection {
 		
 	Format::createHeader("Bid confirmation", "", "js/validate.js");
 	
+print <<END;
+	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
+END
+
 	my $email = $q->param("email");
 	my ($firstName) = $q->param("name") =~ /^(\w+)/;
 
@@ -773,6 +802,17 @@ sub handleAssignments {
 	$q->param( "name" => Review::getReviewerName($user) );
 	
 	Format::createHeader("Review of updated submissions", "", "js/validate.js");
+	
+print <<END;
+	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
+END
+
+print <<END;
+	<p>Oops, this feature is unavailable at this time.</p>
+END
+
+	Format::createFooter();
+	return;
 	
 	my ($firstName) = $q->param("name") =~ /^(\w+)/;
 	
