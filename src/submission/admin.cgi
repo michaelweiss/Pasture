@@ -356,6 +356,7 @@ END
 	Format::createFooter();
 }
 
+# handle request to list PC members
 sub handlePc {	
 	Assert::assertTrue(Session::check($q->param("session")), 
 		"Session expired. Please sign in first.");
@@ -368,18 +369,19 @@ sub handlePc {
 	Format::startForm("post", "menu");
 	Format::createHidden("session", $q->param("session"));
 
-	if (0) {
+	if (1) {
 	my @pcMembers = Review::getProgramCommitteeMembers();
 	my $emails;	
 
 	print "<table>\n";
-	foreach $email (@pcMembers) {
+	foreach $user (@pcMembers) {
+		# TODO: get email
 		unless ($emails) {
 			$emails = $email;
 		} else {
 			$emails .= "," . $email;
 		}
-		my $name = Review::getReviewerName($email);
+		my $name = Review::getReviewerName($user);
 		print <<END;
 	<tr>
 		<td>$name</td>

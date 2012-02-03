@@ -11,10 +11,13 @@ use Core::Serialize;
 use Core::Serialize::Records;
 use Core::Email;
 
+use Core::Role;
+
 our $config = Serialize::getConfig();
 our $WEB_CHAIR = $config->{"web_chair"};
 our $WEB_CHAIR_EMAIL = $config->{"web_chair_email"};
 our $CONFERENCE = $config->{"conference"};
+our $CONFERENCE_ID = $config->{"conference_id"};
 our $baseUrl = $config->{"url"};
 
 my $LOCK = 2;
@@ -172,24 +175,15 @@ sub getReviewerName {
 	return $name;
 }
 
-# TODO: need to re-implement
+sub getReviewerEmail {
+	my ($user) = @_;
+	my %contact = Contact::loadContact($user);
+	return $contact{"email"};
+}
+
+# DONE: need to re-implement
 sub getProgramCommitteeMembers {
-	my @reviewers;
-	_lock("data", "reviewers");
-	open(REVIEWERS, "data/reviewers.dat") ||
-		Audit::handleError("Could not access reviewer file");
-	while (<REVIEWERS>) {
-		chomp;
-		if (/(.+?), .+?, (\w+)/) {
-			my ($email, $role) = ($1, $2);
-			if ($role eq "admin" || $role eq "pc" || $role =~ /track/) {
-				push(@reviewers, $email);
-			}
-		}	# lines that don't match are skipped
-	}
-	close(REVIEWERS);
-	_unlock("data", "reviewers");
-	return @reviewers;
+	return Role::getUsersInRole($CONFERENCE_ID, "pc");
 }
 
 sub getReviewersForPaper {
