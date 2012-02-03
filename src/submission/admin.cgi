@@ -332,6 +332,7 @@ sub handleShepherds {
 
 	print "<table>\n";
 	foreach $assignment (values %$assignments) {
+		# TODO: assignments linked to users, not emails
 		my $email = $assignment->{"shepherd"}; 
 		unless ($emails) {
 			$emails = $email;

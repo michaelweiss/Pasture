@@ -172,7 +172,11 @@ sub handleSubmissions {
 		"Session expired. Please sign in first.");
 		
 	my ($user, $role) = $sessionInfo =~ /:(.+?):(.+)/;	
+	
 	unless ($user) {
+		# TODO: shepherds need to create an account
+		Assert::assertTrue(0, "You need to create an account first");
+		
 		Assert::assertEquals("email", "@", "Please enter a valid email address");
 		if ($q->param("status") eq "new") {
 			unless ($q->param("code") eq $config->{"shepherd_password"}) {
@@ -299,8 +303,10 @@ END
 			# DONE: show shepherd and PC for papers that have been assigned
 			if (Shepherd::status($reference) eq "assigned") {
 				my %assignment = Shepherd::assignedTo($reference);
+				# TODO: email -> user id
 				my $pc_email = $assignment{"pc"};
 				my $pc_name = Review::getReviewerName($pc_email);
+				# TODO: email -> user id
 				my $shepherd_email = $assignment{"shepherd"};
 				my $shepherd_name = Review::getReviewerName($shepherd_email);
 				print <<END;
@@ -374,6 +380,7 @@ END
         	$record->param("track") eq $FOCUS_GROUP_TRACK) {
 			if (Shepherd::status($reference) eq "assigned") {
 				my %assignment = Shepherd::assignedTo($reference);
+				# TODO: email -> user id
 				my $pc_email = $assignment{"pc"};
 				my $shepherd_email = $assignment{"shepherd"};
 				# either all, or only for a specific user
@@ -557,7 +564,9 @@ sub handleAccept {
 	unless ($token eq $q->param("token")) {
 		Audit::handleError("You are not allowed to perform this action");
 	} 
-	
+					
+	# TODO: email -> user id
+	# can get user name from the session
 	my $email = $q->param("email");
 	my $name = Review::getReviewerName($email);
 	
@@ -609,6 +618,7 @@ sub handleReject {
 		Audit::handleError("You are not allowed to perform this action");
 	} 
 
+	# TODO: email -> user id
 	my $email = $q->param("email");
 	my $name = Review::getReviewerName($email);
 
@@ -659,6 +669,7 @@ sub handleAcceptConfirmed {
 	
 	Format::createHeader("Accept confirmed", "", "js/validate.js");
 	
+	# TODO: email -> user id
 	my $email = $q->param("email");
 	my $name = Review::getReviewerName($email);
 	my $label = $q->param("label");
@@ -692,6 +703,7 @@ sub handleRejectConfirmed {
 
 	Format::createHeader("Reject confirmed", "", "js/validate.js");
 	
+	# TODO: email -> user id
 	my $email = $q->param("email");
 	my $name = Review::getReviewerName($email);
 	my $label = $q->param("label");
@@ -757,6 +769,7 @@ sub handleAssignments {
 	Assert::assertTrue($role eq "shepherd" || $role eq "pc" || $role eq "admin",
 		"Only shepherds, PC members, and shepherds can perform this action.");
 
+	# TODO: email -> user id
 	$q->param( "name" => Review::getReviewerName($user) );
 	
 	Format::createHeader("Review of updated submissions", "", "js/validate.js");
