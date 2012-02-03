@@ -343,63 +343,10 @@ sub handleDownload {
 	}
 }
 
-sub handleLog {
-	# DONE: check that this is a valid session id
-#	Assert::assertTrue(Session::check($q->param("session")), 
-#		"Session expired. Please sign in first.");
-	
-	Format::createHeader("Screen > Log", "", "js/tablesort.js");
-
-	Format::startForm("post", "menu");
-	Format::createHidden("session", Session::create(Session::uniqueId(), $timestamp));
-
-	print <<END;
-<table border="1" cellspacing="0" onClick="sortColumn(event)">
-<thead>
-	<tr bgcolor="buttonface">
-		<td width="100" type="HostAddress"><b>Host</b></td>
-		<td width="200" type="Date"><b>Time</b></form></td>
-		<td><b>Action</b></td>
-	</tr>
-</thead>
-<tbody>
-END
-	open(LOG, "data/log.dat") ||
-		handleError("Could not access log");
-	flock(LOG, $LOCK);
-	while (<LOG>) {
-		/(.+?), (\d+?), (.+)/;
-		my $host = $1;
-		my $time = localtime($2);
-		my $action = $3;
-		my ($dayOfWeek, $month, $day, $h, $m, $s, $year) =
-			$time =~ /(\w+) (\w+) (\d+) (\d+):(\d+):(\d+) (\d+)/;		
-#		print <<END;
-#	<tr>
-#		<td valign="top">$host</td>
-#		<td valign="top">$month $day, $year $h:$m:$s</td>
-		print <<END;
-	<tr>
-		<td valign="top">$host</td>
-		<td valign="top">$time</td>
-		<td valign="top">$action</td>
-	</tr>
-END
-	}
-	flock(LOG, $UNLOCK);
-	close(LOG);
-	print <<END;
-</tbody>
-</table>
-END
-	Format::endForm("Done");
-	Format::createFooter();
-}
-
 sub handleError {
 	my ($error) = @_;
 	# DONE: log errors with error details
-	addToErrorLog($error);
+	Audit::addToErrorLog($error);
 	Format::createHeader("Screen > Error");
 	my $uriEncodedError = uri_escape($error);
 	print <<END;
@@ -408,100 +355,6 @@ sub handleError {
 END
 	Format::createFooter();
 	exit(0);
-}
-
-sub handleSendPcLogin {
-	unless ($q->param("email")) {
-		Format::createHeader("Screen > Password help", "", "");
-		Format::startForm("post", "send_pc_login");
-		Format::createFreetext("To retrieve your password, please provide the email address you use to log in.");
-		Format::createTextWithTitle("Enter your email address", 
-			"My email address is", "email", 40);
-		Format::createFreetext("Once you submit, your password will be sent to this email address.");
-		Format::endForm("Send password");
-		Format::createFooter();
-	} else {
-		my $status = sendPasswordForEmail($q->param("email"));
-		if ($config->{"debug"}) {
-			Format::createHeader("Screen > Password help", "", "");
-			print "Email: <pre>$status</pre>";
-			Format::createFooter();
-		} else {
-			handleSignIn();
-		}
-
-	}
-}
-
-# Mails
-
-# Recover the password for a submission. Send to the contact author's email.
-#
-# $reference is the reference number of the submission
-sub sendPasswordForEmail {
-	my ($email) = @_;
-	
-	# get record metadata
-	my %labels = Records::listCurrent();
-	my $record = Records::getRecord($labels{$reference}); 
-	
-	my $name = Review::getReviewerName($email);
-	my ($sanitizedName) = $name	=~ m/([\w\s-]*)/;	
-	my $tmpFileName = Email::tmpFileName($timestamp, $sanitizedName);
-	my ($firstName) = $sanitizedName =~ /^(\w+)/;	
-	
-	my $password = Review::getPassword($email);
-	open (MAIL, ">$tmpFileName") || 
-		Audit::handleError("Cannot create temporary file");
-	if ($password) {
-	print MAIL <<END;
-Dear $firstName,
-
-your reviewer password is: $password.
-
-$WEB_CHAIR
-$CONFERENCE Web Chair
-END
-	} else {
-	print MAIL <<END;
-We tried very hard to retrieve your password, but there is none for the email address you provided. Please check if you used the right email address.
-
-$WEB_CHAIR
-$CONFERENCE Web Chair
-END
-	}
-	close (MAIL);
-	my $status = Email::send($email, "",
-		"[$CONFERENCE] Recovered reviewer password", 
-		$tmpFileName, 0);
-	return $status;
-}
-
-# Audit
-
-sub trace {
-	my ($action) = @_;
-	my $remote_host = $q->remote_host();
-	open(LOG, ">>data/log.dat") ||
-		handleError("Could not log action: $ip, $timestamp, $action");
-	flock(LOG, $LOCK);
-	print LOG "$remote_host, $timestamp, screen.$action\n";
-	flock(LOG, $UNLOCK);
-	close(LOG);
-}
-
-sub addToErrorLog {
-	my ($error) = @_;
-	my $action = $q->param("action") || "unknown";
-	my $remote_host = $q->remote_host();
-	my $user_agent = $q->user_agent();
-	my $email = $q->param("email") || "NA";
-	open(LOG, ">>data/errors.dat") ||
-		return;
-	flock(LOG, $LOCK);
-	print LOG "$remote_host|$timestamp|submit.$action|$user_agent|$email|$error\n";
-	flock(LOG, $UNLOCK);
-	close(LOG);	
 }
 
 # Browsing
@@ -626,20 +479,6 @@ sub averageVote {
 	return int(10*$sum/$n)/10;
 }
 
-#sub averageVote {
-#	my ($votes, $reference) = @_;
-#	my @users = values %{$votes->{$reference}};
-#	my $sum = 0;
-#	foreach $user (@users) {
-#		$sum += $user->{"vote"};
-#	}
-#	my $n = @users;
-#	if ($n == 0) {
-#		return 0;
-#	}
-#	return int(10*$sum/$n)/10;
-#}
-
 sub getTags {
 	my ($record) = @_;
 	my $tags = $record->param("tags");
@@ -684,7 +523,7 @@ sub abstractContainsTag {
 
 my $action = $q->param("action") || "submissions";
 Format::sanitizeInput();
-trace($action);
+Audit::trace($action);
 if ($action eq "submissions") {
 	handleSubmissions();
 } elsif ($action eq "vote") {
@@ -693,10 +532,6 @@ if ($action eq "submissions") {
 	handleSignOut();
 } elsif ($action eq "download") {
 	handleDownload();
-} elsif ($action eq "log") {
-	handleLog();
-} elsif ($action eq "send_pc_login") {
-	handleSendPcLogin();
 } else {
 	handleError("No such action");
 }
