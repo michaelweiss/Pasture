@@ -368,6 +368,7 @@ sub handlePc {
 	Format::startForm("post", "menu");
 	Format::createHidden("session", $q->param("session"));
 
+	if (0) {
 	my @pcMembers = Review::getProgramCommitteeMembers();
 	my $emails;	
 
@@ -392,7 +393,11 @@ END
 	print <<END;
 	<p><a href="mailto:$emails">Send email to all PC members</a></p>
 END
-	
+	} else {
+		print <<END;
+	<p>Oops. This feature is not yet available.</p>
+END
+	}
 	Format::endForm("Menu");
 
 	Format::createFooter();

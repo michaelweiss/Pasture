@@ -59,9 +59,10 @@ sub handleSignIn {
 	Format::createHeader("Gate > Sign in", "", "js/validate.js");
 	Format::startForm("post", "menu");
 	
-	# TODO: add hidden field or session parameter in cookie for the user's role
-	# we might want to log in users as a shepherd when they sign up to become a shepherd
-	print <<END;
+	unless ($config->{"making_changes"}) {
+		# TODO: add hidden field or session parameter in cookie for the user's role
+		# we might want to log in users as a shepherd when they sign up to become a shepherd
+		print <<END;
 	<p>Welcome to the $CONFERENCE submission site.</p>
 
 	<div id="box">
@@ -79,12 +80,21 @@ sub handleSignIn {
 	</table>
 END
 
-	Format::endForm("Sign in");
+		Format::endForm("Sign in");
+	
+		Format::createFreetext(
+			"If you do not have an account, please <a href=\"$baseUrl/$script?action=sign_up\">sign up for one</a>.");
+		Format::createFreetext(
+			"If you forgot your password, <a href=\"$baseUrl/$script?action=send_login\">click here</a>.");
+	} else {
+		print <<END;
+	<p>Welcome to the $CONFERENCE submission site.</p>
 
-	Format::createFreetext(
-		"If you do not have an account, please <a href=\"$baseUrl/$script?action=sign_up\">sign up for one</a>.");
-	Format::createFreetext(
-		"If you forgot your password, <a href=\"$baseUrl/$script?action=send_login\">click here</a>.");
+	<div id="box">
+	<p>The site is being updated.</p>
+	<p>Please check back in a few minutes.</p>
+END
+	}
 		
 	print <<END;
 	</div>
@@ -102,7 +112,8 @@ sub handleMenu {
 		Assert::assertNotEmpty("user", "Need to enter a user name");
 		Assert::assertNotEmpty("password", "Need to enter a password");
 	
-		$user = $q->param("user");
+		# convert user name to lower case
+		$user = lc($q->param("user"));
 		my $password = $q->param("password");
 			
 		$role = checkPassword($user, $password);
@@ -248,7 +259,8 @@ sub handleProfile {
 	Assert::assertNotEmpty("password", "Need to enter a password");
 	Assert::assertNotEmpty("passwordConfirmed", "Need to confirm your password");
 
-	$user = $::q->param("user");
+	# convert user name to lower case
+	$user = lc($::q->param("user"));
 	$firstName = $::q->param("firstName");
 	$lastName = $::q->param("lastName");
 	$email = $::q->param("email");
@@ -266,7 +278,7 @@ sub handleProfile {
 	# check whether the passwords match
 	Assert::assertTrue($password eq $passwordConfirmed, 
 		"Passwords do not match");
-		
+			
 	Password::logUserPassword($user, $password);
 	User::saveUser($user, $firstName, $lastName, $affiliation, $country);
 	Contact::saveContact($user, $email);

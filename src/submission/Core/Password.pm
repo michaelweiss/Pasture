@@ -48,8 +48,6 @@ sub _salt {
 
 sub checkUserPassword {
 	my ($user, $password) = @_;
-	# user name should not be case sensitive
-	$user = lc($user);
 	# create hash of password
 	$password = _salt($password);
 	
@@ -70,8 +68,6 @@ sub checkUserPassword {
 
 sub logUserPassword {
 	my ($user, $password) = @_;
-	# user name should not be case sensitive
-	$user = lc($user);
 	# create hash of password
 	$password = _salt($password);
 	
