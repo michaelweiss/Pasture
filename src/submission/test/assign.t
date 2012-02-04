@@ -11,12 +11,19 @@ sub setup {
 	unlink("data/screen/assignments.dat");
 }
 
-sub testAssignOnePaper {
-	print "testAssignOnePaper\n";
+sub testAssignPapers {
+	print "testAssignPapers\n";
 	Role::addRole("bob", "europlop2012", "pc");
-	Submission::recordSubmission(1, "bob");
+	Role::addRole("joe", "europlop2012", "pc");
+	Submission::recordSubmission(1, "mark");
+	Submission::recordSubmission(2, "nancy");
+	Submission::recordSubmission(3, "peter");
+	Assign::loadAssignments();
 	Assign::assignPaper("bob", 1);
-	Assign::
+	Assign::assignPaper("joe", 2);
+	Assign::assignPaper("bob", 3);
+	Assign::saveAssignments();
 }
 
 setup();
+testAssignPapers();
