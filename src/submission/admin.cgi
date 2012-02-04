@@ -255,26 +255,33 @@ END
 			<table>
 END
 
+	# DONE: keep track of which authors have been listed already
+	my %authors;
+	
 	foreach $label (sort @records) {
 		if ($label =~ /^(\d+)_(\d+)$/) {
 			my $reference = $2;
-			unless (Shepherd::status($reference) eq "reject" ||
-				Shepherd::status($reference) eq "withdrawn") {
+			unless (Shepherd::status($reference) eq "reject" || 
+					Shepherd::status($reference) eq "withdrawn") {
 				my $record = getRecord($label);
 				my $contactName = $record->param("contact_name");
 				my $contactEmail = $record->param("contact_email");		
-				unless ($emails) {
-					$emails = $contactEmail;
-				} else {
-					$emails .= "," . $contactEmail;
-				}	
-				print <<END;
+				unless ($authors{$contactEmail}) {
+					unless ($emails) {
+						$emails = $contactEmail;
+					} else {
+						$emails .= "," . $contactEmail;
+					}	
+					print <<END;
 	<tr>
 		<td>$contactName</td>
 		<td width="10"></td>
 		<td><a href="mailto:$contactEmail">$contactEmail</a></td>
 	</tr>
 END
+					# remember that author has already been shown
+					$authors{$contactEmail} = 1;
+				}
 			}
 		}
 	}

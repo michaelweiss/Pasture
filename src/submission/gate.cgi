@@ -31,6 +31,7 @@ our $WEB_CHAIR = $config->{"web_chair"};
 our $WEB_CHAIR_EMAIL = $config->{"web_chair_email"};
 our $CONFERENCE = $config->{"conference"};
 our $CONFERENCE_ID = $config->{"conference_id"};
+our $CONFERENCE_WEBSITE = $config->{"conference_website"};
 our $SUBMISSION_OPEN = $config->{"submission_open"};
 our $SHEPHERD_SUBMISSION_OPEN = $config->{"shepherd_submission_open"};
 our $baseUrl = $config->{"url"};
@@ -63,7 +64,7 @@ sub handleSignIn {
 		# TODO: add hidden field or session parameter in cookie for the user's role
 		# we might want to log in users as a shepherd when they sign up to become a shepherd
 		print <<END;
-	<p>Welcome to the $CONFERENCE submission site.</p>
+	<p>Welcome to the <a href="$CONFERENCE_WEBSITE">$CONFERENCE</a> submission site.</p>
 
 	<div id="box">
 	<p>Please sign in using your account.</p>
@@ -129,7 +130,7 @@ sub handleMenu {
 	Format::createHeader("Gate > Menu");
 	
 	print <<END;
-<p>Dear $profile{"firstName"}, you are logged into the $CONFERENCE submission site as <b>$role</b>.</p>
+<p>Dear $profile{"firstName"}, you are logged into the <a href="$CONFERENCE_WEBSITE">$CONFERENCE</a> submission site as <b>$role</b>.</p>
 
 <div id="widebox">
 <p>Here is what you can do:</p>

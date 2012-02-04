@@ -1,7 +1,9 @@
 debug=1
 
 conference=EuroPLoP 2012
+
 conference_id=europlop2012
+conference_website=http://www.hillside.net/europlop/europlop2012
 
 url=http://www.hillside.net/europlop/europlop2012/_submission
 
