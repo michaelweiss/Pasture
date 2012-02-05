@@ -20,6 +20,18 @@ sub testUpdateContact {
 	$contact{"email"} eq "bob\@newemail.com" || die "email does not match: " . $contact{"email"};
 }
 
+sub testAllContacts {
+	print "testAllContacts\n";
+	Contact::saveContact("bob", "bob\@email.com");
+	Contact::saveContact("alice", "alice\@email.com");
+	Contact::saveContact("sue", "sue\@email.com");
+	my @contacts = Contact::loadAllContacts();
+	$#contacts == 3-1 || die "array does not have 3 elements: " . @contacts;
+}
+
 setup();
 testCreateContact();
 testUpdateContact();
+
+setup();
+testAllContacts();

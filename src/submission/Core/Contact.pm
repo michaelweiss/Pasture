@@ -34,4 +34,18 @@ sub loadContact {
 	return %contact;
 }
 
+sub loadAllContacts {
+	Lock::lock("data", "contacts");
+	my @contacts;
+	open(LOG, "data/contacts.dat") ||
+		Audit::handleError("Could not load contact information");
+	while (<LOG>) {
+		if (/^(.+?)\t/) {	
+			push(@contacts, $1);
+		}
+	}
+	return @contacts;
+}
+
+
 1;

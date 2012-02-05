@@ -17,6 +17,7 @@ use Core::Shepherd;
 use Core::Review;
 # use Core::Register;
 use Core::Role;
+use Core::Contact;
 
 my $LOCK = 2;
 my $UNLOCK = 8;
@@ -255,6 +256,8 @@ END
 			<table>
 END
 
+	# TODO: use submission list to compute list of authors, and move to submissions module
+	
 	# DONE: keep track of which authors have been listed already
 	my %authors;
 	
@@ -341,7 +344,83 @@ END
 	<p><a href="mailto:$emails">Send email to all PC members</a></p>
 END
 
+	print <<END;
+	<a href="$script?action=add_role&role=pc&session=$session">Add a new PC member</a>
+END
+
 	Format::createFooter();
+}
+
+sub handleAddRole {
+	my $session = checkCredentials();	
+		
+	Format::createHeader("Admin > Add Role");
+
+	print <<END;
+	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
+END
+
+	my $role = $q->param("role");
+	if ($role eq "pc") {
+		if ($q->param("new_user")) {
+			my $user = $q->param("new_user");
+			unless (Role::hasRole($user, $CONFERENCE_ID, "pc")) {
+				Role::addRole($user, $CONFERENCE_ID, "pc");	
+			}
+		}
+		print <<END;
+	<form>
+	<p>To add a new PC member, select a user on the right and click "<<".</p>
+	<p><table>
+		<tr>
+			<th>PC</th>
+			<th></th>
+			<th>Users</th>
+		<tr>
+		<tr><td>
+	<select name="old_user" multiple="false" size="12">
+END
+
+		my @members = Review::getProgramCommitteeMembers();
+		foreach my $user (@members) {	
+			my $name = Review::getReviewerName($user);
+			print <<END;
+		<option name="old_user" value="$user"/> $name ($user)
+END
+		}
+
+		print <<END;
+	</select>		
+		</td><td>
+		<input type="hidden" name="session" value="$session">
+		<input type="hidden" name="action" value="add_role">
+		<input type="hidden" name="role" value="$role">
+		<input type="submit" value="<<">
+		</td><td>
+	<select name="new_user" multiple="true" size="12">
+END
+
+		my @contacts = Contact::loadAllContacts();
+		foreach my $user (@contacts) {	
+			unless (Role::hasRole($user, $CONFERENCE_ID, $role)) {
+				my $name = Review::getReviewerName($user);
+				print <<END;
+		<option name="new_user" value="$user"/> $name ($user)
+END
+			}
+		}
+	
+		print <<END;
+	</select></td>
+		</tr>	
+	</table></p>
+	</form>
+END
+	} else {
+		print <<END;
+	<p>Role not yet supported.</p>
+END
+	}
 }
 
 sub handleShepherds {	
@@ -595,6 +674,8 @@ if ($action eq "menu") {
 	handleAuthors();
 } elsif ($action eq "pc") {
 	handlePc();
+} elsif ($action eq "add_role") {
+	handleAddRole();
 } elsif ($action eq "participants") {
 	handleParticipants();
 } elsif ($action eq "shepherds") {
