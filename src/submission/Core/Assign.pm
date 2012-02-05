@@ -7,7 +7,7 @@ use Core::Lock;
 my %assignments;
 
 sub getAssignments {
-	if (undef %assignments) {
+	unless (%assignments) {
 		loadAssignments(); 
 	}
 	return %assignments;
@@ -15,10 +15,10 @@ sub getAssignments {
 
 sub getAssignmentsForReviewer {
 	my ($reviewer) = @_;
-	unless (defined %assignments) {
-		%assignments = loadAssignments();
+	unless (%assignments) {
+		loadAssignments();
 	}
-	return $assignments{$reviewer};
+	return @{$assignments{$reviewer}};
 }
 
 sub loadAssignments {

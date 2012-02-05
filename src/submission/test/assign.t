@@ -23,6 +23,9 @@ sub testAssignPapers {
 	Assign::assignPaper("joe", 2);
 	Assign::assignPaper("bob", 3);
 	Assign::saveAssignments();
+	my @bobs = Assign::getAssignmentsForReviewer("bob");
+	$bobs[0] eq "1" || die "expected 1, but got: $bobs[0]";
+	$bobs[1] eq "3" || die "expected 3, but got: $bobs[1]";
 }
 
 setup();
