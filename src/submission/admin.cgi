@@ -421,6 +421,42 @@ END
 	<p>Role not yet supported.</p>
 END
 	}
+
+	Format::createFooter();
+}
+
+sub handleAssignments {
+	my $session = checkCredentials();	
+		
+	Format::createHeader("Admin > Screening assignments");
+
+	print <<END;
+	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
+END
+
+	my %assignments = Assign::loadAssignments();
+
+	print <<END;
+	<div id="widebox">
+	<p><table>
+		<tr><th>Reviewer</th><th>Papers</th></tr>
+END
+
+	foreach $reviewer (keys %assignments) {
+		print "<tr>";
+		print "<td>$reviewer</td>";
+		foreach $paper (@{$assignments{$reviewer}}) {
+			print "<td>$paper</td>";
+		}
+		print "</tr>\n";
+	}	
+
+	print <<END;
+	</table></p>
+	</div>
+END
+
+	Format::createFooter();
 }
 
 sub handleShepherds {	
@@ -676,6 +712,8 @@ if ($action eq "menu") {
 	handlePc();
 } elsif ($action eq "add_role") {
 	handleAddRole();
+} elsif ($action eq "assignments") {
+	handleAssignments();
 } elsif ($action eq "participants") {
 	handleParticipants();
 } elsif ($action eq "shepherds") {
