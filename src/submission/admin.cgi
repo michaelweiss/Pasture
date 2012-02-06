@@ -18,6 +18,7 @@ use Core::Review;
 # use Core::Register;
 use Core::Role;
 use Core::Contact;
+use Core::Debug;
 
 my $LOCK = 2;
 my $UNLOCK = 8;
@@ -345,7 +346,10 @@ END
 END
 
 	print <<END;
-	<a href="$script?action=add_role&role=pc&session=$session">Add a new PC member</a>
+	<p>
+		<a href="$script?action=add_role&role=pc&session=$session">Add a new PC member</a><br/>
+		<a href="$script?action=assignments&session=$session">Edit screening assignments</a>
+	</p>
 END
 
 	Format::createFooter();
@@ -434,25 +438,57 @@ sub handleAssignments {
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
 
-	my %assignments = Assign::loadAssignments();
-
 	print <<END;
 	<div id="widebox">
+	<form method="POST">
 	<p><table>
-		<tr><th>Reviewer</th><th>Papers</th></tr>
 END
 
-	foreach $reviewer (keys %assignments) {
-		print "<tr>";
-		print "<td>$reviewer</td>";
-		foreach $paper (@{$assignments{$reviewer}}) {
-			print "<td>$paper</td>";
+	my @pcMembers = Review::getProgramCommitteeMembers();
+	
+	if ($q->param("status") eq "updated") {
+		foreach $reviewer (@pcMembers) {
+			# Still a proof of concept, not the final tool
+			# TODO: make number of papers assigned to each PC configurable
+			# TODO: support wildcard "*" to assign all papers
+			# TODO: should really check that parameters are numbers
+			foreach my $i (0..6) {
+				my $paper = $q->param("$reviewer.$i");
+				if ($paper) {
+					Assign::assignPaper($reviewer, $paper);
+				}
+			}
 		}
-		print "</tr>\n";
+		Assign::saveAssignments();
+	}
+	
+	foreach $reviewer (@pcMembers) {
+		my $name = Review::getReviewerName($reviewer);
+		print <<END;
+		<tr>
+			<td>$name</td>
+			<td width="10">
+END
+		my @assignments = Assign::getAssignmentsForReviewer($reviewer);		
+		foreach my $i (0..6) {
+			my $paper = $assignments[$i];
+			print <<END;
+			<td><input name="$reviewer.$i" type="text" size="1" value="$paper"></td>
+END
+			$i++;
+		}	
+		print <<END;
+		</tr>
+END
 	}	
 
 	print <<END;
 	</table></p>
+	<input type="hidden" name="session" value="$session">
+	<input type="hidden" name="action" value="assignments">
+	<input type="hidden" name="status" value="updated">
+	<input type="submit" value="Update">
+	</form>
 	</div>
 END
 

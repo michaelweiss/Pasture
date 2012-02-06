@@ -367,7 +367,6 @@ sub adminMenu {
 		<li><a href="admin.cgi?action=view_submissions&session=$session">View submissions</a></li>
 		<li><a href="admin.cgi?action=authors&session=$session">View authors</a></li>
 		<li><a href="admin.cgi?action=pc&session=$session">View PC members</a></li>
-		<li><a href="admin.cgi?action=assignments&session=$session">View screening assignments</a></li>
 		<li><a href="admin.cgi?action=shepherds&session=$session">View shepherds</a></li>
 	<!--
 		<li><a href="admin.cgi?action=participants&session=$session">View participants</a></li>

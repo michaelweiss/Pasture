@@ -28,8 +28,10 @@ sub loadAssignments {
 		return;
 	while (<ASSIGNMENTS>) {
 		chomp;
-		my ($_reviewer, @submissions) = split(/, /);
-		$_assignments{$reviewer} = @submissions;
+		# FIXED: $reviewer instead of $_reviewer 
+		my ($reviewer, @submissions) = split(/, /);
+		# FIXED: \@submissions instead of @submissions
+		$_assignments{$reviewer} = \@submissions;
 	}
 	Lock::unlock("data/screen", "assignments");
 	%assignments = %_assignments;

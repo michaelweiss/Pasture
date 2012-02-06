@@ -111,3 +111,7 @@ sup {
 td p {
 	margin:0;
 }
+
+select {
+	font-size: 11pt;
+}

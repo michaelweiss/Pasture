@@ -76,7 +76,7 @@ sub getReviews {
 # TODO: find all references, and point them to Assign module
 sub getAssignments {
 	my ($user) = @_;
-	return Assign::getAssignments($user);
+	return Assign::getAssignmentsForReviewer($user);
 }
 
 1;

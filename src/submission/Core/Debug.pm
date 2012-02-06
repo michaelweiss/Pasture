@@ -7,8 +7,8 @@ use CGI;
 sub dumpParameters {
 	print "<hr/>\n";
 	print "<ul>\n";
-	foreach $name ($q->param()) {
-		my $value = $q->param($name);
+	foreach $name ($::q->param()) {
+		my $value = $::q->param($name);
 		print "<li>$name: $value</li>\n";
 	}
 	print "</ul>\n";

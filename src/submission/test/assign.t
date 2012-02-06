@@ -28,5 +28,24 @@ sub testAssignPapers {
 	$bobs[1] eq "3" || die "expected 3, but got: $bobs[1]";
 }
 
+# requires testAssignPapers to have run before
+sub testLoadAssignments {
+	print "testLoadAssignments\n";
+	Assign::loadAssignments();
+	my @bobs = Assign::getAssignmentsForReviewer("bob");
+	$bobs[0] eq "1" || die "expected 1, but got: $bobs[0]";
+	$bobs[1] eq "3" || die "expected 3, but got: $bobs[1]";
+}
+
+# requires testAssignPapers to have run before
+sub testGetAssignmentsForReviewer {
+	print "testGetAssignmentsForReviewer\n";
+	my @joes = Assign::getAssignmentsForReviewer("joe");
+	$joes[0] eq "2" || die "expected 2, but got: $joes[0]";
+}
+
 setup();
 testAssignPapers();
+
+testLoadAssignments();
+testGetAssignmentsForReviewer();
