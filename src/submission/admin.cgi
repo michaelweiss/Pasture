@@ -429,14 +429,44 @@ END
 	Format::createFooter();
 }
 
+# handle request to edit assignments
 sub handleAssignments {
 	my $session = checkCredentials();	
 		
 	Format::createHeader("Admin > Screening assignments");
-
+	
 	print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
+
+	my @pcMembers = Review::getProgramCommitteeMembers();
+	if ($q->param("status") eq "updated") {
+		updateAssignments(@pcMembers);
+	}
+	showAssignmentsEditor(@pcMembers);
+
+	Format::createFooter();
+}
+
+sub updateAssignments {
+	my @pcMembers = @_;
+	foreach $reviewer (@pcMembers) {
+		# Still a proof of concept, not the final tool
+		# TODO: make number of papers assigned to each PC configurable
+		# TODO: support wildcard "*" to assign all papers
+		# TODO: should really check that parameters are numbers
+		foreach my $i (0..9) {
+			my $paper = $q->param("$reviewer.$i");
+			if ($paper) {
+				Assign::assignPaper($reviewer, $paper);
+			}
+		}
+	}
+	Assign::saveAssignments();
+}
+
+sub showAssignmentsEditor {
+	my @pcMembers = @_;
 
 	print <<END;
 	<div id="widebox">
@@ -444,44 +474,10 @@ END
 	<p><table>
 END
 
-	my @pcMembers = Review::getProgramCommitteeMembers();
-	
-	if ($q->param("status") eq "updated") {
-		foreach $reviewer (@pcMembers) {
-			# Still a proof of concept, not the final tool
-			# TODO: make number of papers assigned to each PC configurable
-			# TODO: support wildcard "*" to assign all papers
-			# TODO: should really check that parameters are numbers
-			foreach my $i (0..6) {
-				my $paper = $q->param("$reviewer.$i");
-				if ($paper) {
-					Assign::assignPaper($reviewer, $paper);
-				}
-			}
-		}
-		Assign::saveAssignments();
-	}
-	
 	foreach $reviewer (@pcMembers) {
-		my $name = Review::getReviewerName($reviewer);
-		print <<END;
-		<tr>
-			<td>$name</td>
-			<td width="10">
-END
-		my @assignments = Assign::getAssignmentsForReviewer($reviewer);		
-		foreach my $i (0..6) {
-			my $paper = $assignments[$i];
-			print <<END;
-			<td><input name="$reviewer.$i" type="text" size="1" value="$paper"></td>
-END
-			$i++;
-		}	
-		print <<END;
-		</tr>
-END
+		showAssignmentsForOneReviewer($reviewer);
 	}	
-
+	
 	print <<END;
 	</table></p>
 	<input type="hidden" name="session" value="$session">
@@ -491,10 +487,30 @@ END
 	</form>
 	</div>
 END
-
-	Format::createFooter();
 }
 
+sub showAssignmentsForOneReviewer {
+	my ($reviewer) = @_;
+	my $name = Review::getReviewerName($reviewer);
+		print <<END;
+		<tr>
+			<td>$name</td>
+			<td width="10">
+END
+		my @assignments = Assign::getAssignmentsForReviewer($reviewer);		
+		foreach my $i (0..9) {
+			my $paper = $assignments[$i];
+			print <<END;
+			<td><input name="$reviewer.$i" type="text" size="1" value="$paper"></td>
+END
+			$i++;
+		}	
+		print <<END;
+		</tr>
+END
+}
+
+# handle request to view shepherds
 sub handleShepherds {	
 	my $session = checkCredentials();	
 		
