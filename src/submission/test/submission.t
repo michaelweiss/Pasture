@@ -32,7 +32,6 @@ sub testLookupSubmissionsByAuthor {
 		die "references do not match: " . $references[0] . ", " . $references[1];
 }
 
-
 setup();
 testRecordSubmission();
 

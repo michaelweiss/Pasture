@@ -28,6 +28,8 @@ our $CONFERENCE = $config->{"conference"};
 our $CONFERENCE_ID = $config->{"conference_id"};
 our $baseUrl = $config->{"url"};
 
+my $currentTrack = -1;
+
 BEGIN {
 	sub handleInternalError {
 		my $error = shift;
@@ -43,37 +45,45 @@ BEGIN {
 
 # Handlers
 
+# handle request to view initial screening list
 sub handleSubmissions {
 	my $session = checkCredentials();
 	my ($user, $role) = Session::getUserRole($session);	
 		
+	saveVoteWhenUpdated($user);
+		
+	Format::createHeader("Screen > Submissions", "", "js/validate.js");	
+	showMenu($session);
+	
+	showSubmissionsInstructions();
+	
+	my %records = Records::getAllRecords(Records::listCurrent());
+	foreach $label (
+		sort { $records{$a}->param("track") <=> $records{$b}->param("track") }
+			sort { $records{$a}->param("reference") <=> $records{$b}->param("reference") } 
+				keys %records) {
+		my $record = $records{$label};	
+		if (canSeeRecord($user, $role, $label)) {	
+			showVoteCollector($session, $user, $record, $label);
+		}
+	} 
+
+	Format::createFooter();
+}
+
+sub saveVoteWhenUpdated {
+	my ($user) = @_;
+	
 	# if vote, user has decided on a rank
 	# if only reason, user has not assessed but wants like their current reason stored
 	if ($q->param("vote") || $q->param("reason")) {
 		Screen::saveVote($timestamp, $user, 
 			$q->param("reference"), $q->param("vote"), $q->param("reason"));
 	}
-	my $votes = Screen::votes();
 	
-	Format::createHeader("Screen > Submissions", "", "js/validate.js");	
-	
-	print <<END;
-	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
-END
-	
-	# changed votes to format suggested by allan:
-	# 1 - I'm glad this paper was submitted, it's a joy!
-	# 2 - Good ideas in this paper, more work to do.
-	# 3 - Not ready yet, the paper needs a strong shepherd.
-	# 4 - There's a high risk that this paper wastes a shepherd's time.
-	#
-	# replaced following:
-	# <tr><td><img border="0" src="$baseUrl/images/vote.png"/></a></td><td><em>average-vote</em> pre-sheperding vote &nbsp; (1:strong reject, 2:reject, 3:neutral, 4:accept, 5:strong accept)</td></tr>
-	#
-	# with:
-	#
-	# <tr><td><img border="0" src="$baseUrl/images/vote.png"/></a></td><td><em>average-vote</em> pre-sheperding vote &nbsp; (1:it's a joy, 2:good ideas, 3:strong shepherd needed, 4:high risk)</td></tr>
-	
+}
+
+sub showSubmissionsInstructions {
 	print <<END;
 	<h4>Legend</h4>
 		<table>
@@ -88,48 +98,42 @@ END
 		<li>Click on the <img border="0" src="$baseUrl/images/comment.png"/> icon to submit your review for a paper.</li>
 	</ul>
 END
+}
 
-	my $currentTrack = -1;
-	# DONE: only show records that a user is allowed to see
-	# DONE: based on list of assignments
-	my %records = Records::getAllRecords(Records::listCurrent());
-	foreach $label (
-		sort { $records{$a}->param("track") <=> $records{$b}->param("track") }
-			sort { $records{$a}->param("reference") <=> $records{$b}->param("reference") } 
-				keys %records) {
-		my $record = $records{$label};
-		if (canSeeRecord($user, $role, $label)) {		
-			my $reference = $record->param("reference");
+sub showVoteCollector {
+	my ($session, $user, $record, $label) = @_;
+	
+	my $track = $record->param("track");
+	if ($currentTrack != $track) {
+		Format::createFreetext("<h3>" . $config->{"track_" . $track} . "</h3>");
+		$currentTrack = $track;
+	}
 			
-			my $authors = getAuthors($record);
-			$authors =~ s|\r\n|, |g;
-
-			my $contact_name = $record->param("contact_name");
-			my $email = $record->param("contact_email");
-			
-			my $title = $record->param("title");
-			my $abstract = $record->param("abstract");
-			my $fileName = $record->param("file_name");
-			$fileName =~ s/\.\w+$//;
-			my $comments = $record->param("comments");
-			
-			my $track = $record->param("track");
-			if ($currentTrack != $track) {
-				Format::createFreetext("<h3>" . $config->{"track_" . $track} . "</h3>");
-				$currentTrack = $track;
-			}
-			
-			my $token = uri_escape(Access::token($label));
-			my $tags = getTags($record);
-			
-			my $numberOfVotes = numberOfVotes($votes, $reference);
-			# TODO: use a css class instead
-			my $color = ($numberOfVotes < 3) ? "red" : "";
-			my $userVote = userVote($votes, $user, $reference) || "-";
-			my $averageVote = averageVote($votes, $reference) || "(-)";
-			print <<END;
+	print <<END;
 	<table border="0" cellpadding="2" cellspacing="10" width="100%">
 		<tbody>
+END
+	
+	showReferenceAuthorsEmail($record, $label);
+	showTitleCommentsAbstract($record);
+	showTags($record);
+	showVoteForm($session, $user, $record);
+	
+	print <<END;
+		</tbody>
+	</table>
+END
+}
+
+sub showReferenceAuthorsEmail {
+	my ($record, $label) = @_;
+
+	my $reference = $record->param("reference");
+	my $token = uri_escape(Access::token($label));
+	my $authors = getAuthors($record);
+	my $email = $record->param("contact_email");
+						
+	print <<END;
 		<tr>
 			<td valign="top" width="3%"><div align="right">
 				<a href="?token=$token&action=download&label=$label">$reference</a>
@@ -139,6 +143,17 @@ END
 			 	<a href="mailto:$email">$email</a>
 			</td>
 		</tr>
+END
+}
+
+sub showTitleCommentsAbstract {
+	my ($record) = @_;
+
+	my $title = $record->param("title");
+	my $comments = $record->param("comments");
+	my $abstract = $record->param("abstract");
+						
+	print <<END;
 		<tr>
 			<td valign="top" width="3%"></td>
 			<td valign="top" width="97%">
@@ -147,10 +162,35 @@ END
 				$abstract
 			</td>
 		</tr>
+END
+}
+
+sub showTags {
+	my ($record) = @_;
+	
+	my $tags = getTags($record);
+							
+	print <<END;
 		<tr>
 			<td valign="top"></td>
 			<td>Tags: $tags</td>
 		</tr>
+END
+}
+
+sub showVoteForm {
+	my ($session, $user, $record) = @_;
+	
+	my $reference = $record->param("reference");
+	my $authors = getAuthors($record);
+	my $title = $record->param("title");
+	my $votes = Screen::votes();
+	my $numberOfVotes = numberOfVotes($votes, $reference);
+	my $color = ($numberOfVotes < 3) ? "red" : "";
+	my $userVote = userVote($votes, $user, $reference) || "-";
+	my $averageVote = averageVote($votes, $reference) || "(-)";
+								
+	print <<END;
 		<tr>
 			<td valign="top"></td>
 			<td><form method="post">
@@ -167,25 +207,17 @@ END
 				</form>
 			</td>
 		</tr>
-		</tbody>
-	</table>
 END
-		}
-	} 
-
-	Format::createFooter();
 }
 
+# handle request to enter a vote
 sub handleVote {
 	my $session = checkCredentials();
 	my ($user, $role) = Session::getUserRole($session);	
 
 	my $reference = $q->param("reference");
 	Format::createHeader("Screen > Vote", "", "js/validate.js");	
-	
-	print <<END;
-	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
-END
+	showMenu($session);
 
 	Format::startForm("post", "submissions", "return checkVoteForm()");
 	Format::createHidden("session", $q->param("session"));
@@ -392,6 +424,15 @@ sub checkCredentials {
 	return $session;
 }
 
+sub showMenu {
+	my ($session) = @_;
+	
+	print <<END;
+	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
+END
+	
+}
+
 # TODO: make more efficient by computing once only
 sub canSeeRecord {
 	my ($user, $role, $label) = @_;
@@ -420,6 +461,7 @@ sub getAuthors {
 		s/,.+//;
 	}
 	$byline = join(", ", @authors);
+	$byline =~ s|\r\n|, |g;		# TODO: check if still needed
 	return $byline;
 }
 
