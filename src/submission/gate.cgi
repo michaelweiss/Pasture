@@ -21,6 +21,7 @@ use Core::Contact;
 use Core::Submission;
 use Core::Role;
 use Core::Audit;
+use Core::Access;
 use Core::Debug;
 
 our $q = new CGI;
@@ -301,10 +302,17 @@ END
 
 # Handle send login requests
 sub handleSendLogin {
-	Format::createHeader("Gate > Reset password", "", "js/validate.js");
-	Format::startForm("post", "password");
-	
-	print <<END;
+	if ($q->param("user")) {
+		# if user parameter is supplied, generate email with token
+		sendResetPasswordToken($q->param("user"));
+		print $q->redirect(-uri => "$baseUrl/$script");
+	} else {
+		# otherwise, ask user to enter their user name
+		# form will send user back to this handler
+		Format::createHeader("Gate > Reset password", "", "js/validate.js");
+		Format::startForm("post", "send_login");
+		
+		print <<END;
 	<p>To reset your password please enter your user name. You will receive an email asking
 	you to confirm. You can then enter your new password.</p>
 
@@ -318,21 +326,24 @@ sub handleSendLogin {
 	</table>
 END
 
-	Format::endForm("Reset password");
-	
-	print <<END;
+		Format::endForm("Reset password");
+		
+		print <<END;
 	</div>
 END
 
-	Format::createFooter();
+		Format::createFooter();
+		
+	}
 }
 
 # Handle requests to enter a new password
 sub handlePassword {
-	# TODO: check token that was sent to the user
+	# DONE: check token that was sent to the user
 	# other users can't pass
-	
 	$user = $q->param("user");
+	Assert::assertTrue(Access::check($q->param("token"), $user),
+		"Token does not match");
 	
 	$session = Session::create(Session::uniqueId(), $timestamp);
 	Session::setUser($session, $user, "author");
@@ -377,14 +388,18 @@ sub handleChangePassword {
 		"You are not allowed to change this password");
 	
 	Assert::assertNotEmpty("password", "Need to enter a password");
-	Assert::assertNotEmpty("passwordConfirmed", "Need to confirm your password");		
+	Assert::assertNotEmpty("passwordConfirmed", "Need to confirm your password");	
+	
+	my $password = $q->param("password");
+	my $passwordConfirmed = $q->param("passwordConfirmed");
+		
 	
 	# check whether the passwords match
 	Assert::assertTrue($password eq $passwordConfirmed, 
 		"Passwords do not match");
 			
 	# TODO: change logUserPassword to replace existing password	
-	# Password::logUserPassword($user, $password);
+	Password::logUserPassword($user, $password);
 	
 	# redirect to handle menu request
 	print $q->redirect(-uri => "$baseUrl/$script");
@@ -457,6 +472,43 @@ sub adminMenu {
 END
 }
 	
+# Emails
+
+sub sendResetPasswordToken {
+	my ($user) = @_;
+	
+	my %contact = Contact::loadContact($user);
+	my $email = $contact{"email"};
+	
+	my %user = User::loadUser($user);
+	my $name = $user{"firstName"} . $user{"lastName"};
+	my $firstName = $user{"firstName"};
+	
+	# create temporary file
+	my ($sanitizedName) = $name	=~ m/([\w\s-]*)/;	
+	my $tmpFileName = Email::tmpFileName($timestamp, $sanitizedName);
+
+	my $token = uri_escape(Access::token($user));
+	open (MAIL, ">$tmpFileName") || 
+		Audit::handleError("Cannot create temporary file: $tmpFileName");
+	print MAIL <<END;
+Dear $firstName,
+
+A request to reset your password has been received. To reset your password, 
+please click on the following URL: 
+
+$baseUrl/$script?action=password&user=$user&token=$token
+
+$WEB_CHAIR
+$CONFERENCE Web Chair
+END
+	close (MAIL);
+	my $status = Email::send($email, "",
+		"[$CONFERENCE] Request to reset password", 
+		$tmpFileName, 0);
+	return $status;
+}
+
 # Main dispatcher
 
 my $action = $q->param("action") || "sign_in";
