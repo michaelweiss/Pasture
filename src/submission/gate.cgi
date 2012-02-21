@@ -305,8 +305,7 @@ sub handleSendLogin {
 	Format::startForm("post", "password");
 	
 	print <<END;
-	<p>To reset your password please enter your user name.</p> 
-	<p>You will receive an email asking
+	<p>To reset your password please enter your user name. You will receive an email asking
 	you to confirm. You can then enter your new password.</p>
 
 	<div id="widebox">
@@ -328,19 +327,20 @@ END
 	Format::createFooter();
 }
 
-# Handle change password update requests
+# Handle requests to enter a new password
 sub handlePassword {
 	# TODO: check token that was sent to the user
 	# other users can't pass
 	
-	# TODO: create session
-	# $session = Session::create(Session::uniqueId(), $timestamp);
-	# Session::setUser($session, $user, "author");
+	$user = $q->param("user");
+	
+	$session = Session::create(Session::uniqueId(), $timestamp);
+	Session::setUser($session, $user, "author");
 	
 	Format::createHeader("Gate > Password", "", "js/validate.js");
 
 	Format::startForm("post", "change_password");
-	# Format::createHidden("session", $session);
+	Format::createHidden("session", $session);
 	
 	print <<END;
 	<p>To change your password, enter and confirm your new password.</p>
@@ -368,13 +368,13 @@ END
 	Format::createFooter();	
 }
 
-# Handle change password request
+# Handle change password requests
 sub handleChangePassword {
 	my $session = $q->param("session");
 	my ($user, $role) = Session::getUserRole($session);	
 	
 	Assert::assertTrue($user, 
-		"You are allowed to change this password");
+		"You are not allowed to change this password");
 	
 	Assert::assertNotEmpty("password", "Need to enter a password");
 	Assert::assertNotEmpty("passwordConfirmed", "Need to confirm your password");		
@@ -383,10 +383,11 @@ sub handleChangePassword {
 	Assert::assertTrue($password eq $passwordConfirmed, 
 		"Passwords do not match");
 			
+	# TODO: change logUserPassword to replace existing password	
 	# Password::logUserPassword($user, $password);
 	
 	# redirect to handle menu request
-	print $q->redirect(-uri => "$baseUrl/$script?action=menu&session=$session");
+	print $q->redirect(-uri => "$baseUrl/$script");
 }
 
 # Check password
