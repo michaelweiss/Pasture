@@ -53,7 +53,7 @@ sub handleSubmissions {
 	saveVoteWhenUpdated($user);
 		
 	Format::createHeader("Screen > Submissions", "", "js/validate.js");	
-	showMenu($session);
+	showSharedMenu($session);
 	
 	showSubmissionsInstructions();
 	
@@ -217,7 +217,7 @@ sub handleVote {
 
 	my $reference = $q->param("reference");
 	Format::createHeader("Screen > Vote", "", "js/validate.js");	
-	showMenu($session);
+	showSharedMenu($session);
 
 	Format::startForm("post", "submissions", "return checkVoteForm()");
 	Format::createHidden("session", $q->param("session"));
@@ -424,13 +424,12 @@ sub checkCredentials {
 	return $session;
 }
 
-sub showMenu {
+sub showSharedMenu {
 	my ($session) = @_;
 	
 	print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
-	
 }
 
 # TODO: make more efficient by computing once only

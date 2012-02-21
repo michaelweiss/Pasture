@@ -301,12 +301,92 @@ END
 
 # Handle send login requests
 sub handleSendLogin {
-	Format::createHeader("Gate > Sign up", "", "js/validate.js");
+	Format::createHeader("Gate > Reset password", "", "js/validate.js");
+	Format::startForm("post", "password");
+	
 	print <<END;
-<p>Oops, this feature has not been implemented yet. If you don't have an account, 
-you need to <a href=\"$baseUrl/$script?action=sign_up\">sign up for one</a>.</p>
+	<p>To reset your password please enter your user name.</p> 
+	<p>You will receive an email asking
+	you to confirm. You can then enter your new password.</p>
+
+	<div id="widebox">
+	<table cellpadding="0" cellspacing="5">
+		<tr>
+			<td>Your user name:</td>
+			<td width="10"></td>
+			<td><input name="user" type="text"/></td>
+		</tr>
+	</table>
 END
+
+	Format::endForm("Reset password");
+	
+	print <<END;
+	</div>
+END
+
 	Format::createFooter();
+}
+
+# Handle change password update requests
+sub handlePassword {
+	# TODO: check token that was sent to the user
+	# other users can't pass
+	
+	# TODO: create session
+	# $session = Session::create(Session::uniqueId(), $timestamp);
+	# Session::setUser($session, $user, "author");
+	
+	Format::createHeader("Gate > Password", "", "js/validate.js");
+
+	Format::startForm("post", "change_password");
+	# Format::createHidden("session", $session);
+	
+	print <<END;
+	<p>To change your password, enter and confirm your new password.</p>
+
+	<div id="widebox">
+	<table cellpadding="0" cellspacing="5">
+		<tr>
+			<td>Password:</td>
+			<td width="10"></td>
+			<td><input name="password" type="password"/></td>
+		</tr><tr>
+			<td>Confirm your password:</td>
+			<td width="10"></td>
+			<td><input name="passwordConfirmed" type="password"/></td>
+		</tr>
+	</table>
+END
+
+	Format::endForm("Change password");
+	
+	print <<END;
+	</div>
+END
+	
+	Format::createFooter();	
+}
+
+# Handle change password request
+sub handleChangePassword {
+	my $session = $q->param("session");
+	my ($user, $role) = Session::getUserRole($session);	
+	
+	Assert::assertTrue($user, 
+		"You are allowed to change this password");
+	
+	Assert::assertNotEmpty("password", "Need to enter a password");
+	Assert::assertNotEmpty("passwordConfirmed", "Need to confirm your password");		
+	
+	# check whether the passwords match
+	Assert::assertTrue($password eq $passwordConfirmed, 
+		"Passwords do not match");
+			
+	# Password::logUserPassword($user, $password);
+	
+	# redirect to handle menu request
+	print $q->redirect(-uri => "$baseUrl/$script?action=menu&session=$session");
 }
 
 # Check password
@@ -393,6 +473,10 @@ if ($action eq "sign_in") {
 	handleChangeRole();
 } elsif ($action eq "send_login") {
 	handleSendLogin();
+} elsif ($action eq "password") {
+	handlePassword();
+} elsif ($action eq "change_password") {
+	handleChangePassword();
 } else {
 	Audit::handleError("No such action");
 }
