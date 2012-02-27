@@ -69,13 +69,17 @@ sub handleSubmissions {
 		
 	Format::createHeader("Shepherd > Bids", "", "js/validate.js");
 		
-	Format::createFreetext("Please bid for the papers you wish to shepherd. If you provide us with multiple options, we can assign you a paper even if your top preference has already been assigned to somebody else.");
-	Format::createFreetext("If you only want to submit a specific paper, just bid once and email the chair that you really want that paper.");
-	Format::createFreetext("If you had previously made a bid for a paper, your old bid will be shown in <font color=green>green</font>.");
+	Format::createFreetext("Please bid for the papers you wish to shepherd:");
+	print <<END;
+	<ul>
+	<li>If you only want to submit a specific paper, just bid once and email the chair that you really want that paper.</li>
+	<li>If you provide us with multiple options, we can assign you a paper even if your top preference has already been assigned to somebody else.</li>
+	<li>If you had previously made a bid for a paper, your old bid will be shown in <font color=green>green</font>.</li>
+	</ul>
+END
 	Format::createFreetext("<em>Note: By clicking on the number left to the paper description, you can download the paper.</em>");
 	
-	# TODO: don't show the votes, but color-code paper in bids.cgi with pre-shepherding vote
-	# don't think the line with vote.png belongs here, anyhow (cut and paste?)
+	# DONE: don't show the votes, but color-code paper in bids.cgi with pre-shepherding vote
 	print <<END;
 	<h4>Legend</h4>
 	<p>If you want to shepherd a paper, choose your level of priority in the dropdown menu on the left:</p>
@@ -84,8 +88,6 @@ sub handleSubmissions {
 			<tr><td width="20" align="left">1</td><td>I would like to shepherd this paper</td></tr>
 			<tr><td align="left">2</td><td>I could be convinced to shepherd this paper</td></tr>
 			<tr><td align="left">3</td><td>I am willing to shepherd this paper, but only if nobody else does</td></tr> 
-			<tr><td height="15"></td></tr>
-			<tr><td><img border="0" src="/europlop/images/vote.png"/></a></td><td><em>average-vote</em> pre-sheperding vote &nbsp; (1:it's a joy, 2:good ideas, 3:strong shepherd needed, 4:high risk)</td></tr>
 		</table>
 	</p>
 END
@@ -93,7 +95,6 @@ END
 	Format::startForm("post", "selection", "");
 	Format::createHidden("session", $q->param("session"));
 
-	my $votes = Screen::votes();
 	my $preferences = Shepherd::preferencesByUser();
 	
 	my $currentTrack = -1;
@@ -129,8 +130,6 @@ END
 			my $token = uri_escape(Access::token($label));
 			my $tags = Review::getTags($record);
 						
-			my $averageVote =  ($role eq "pc" || $role eq "admin") && 
-				Review::averageVote($votes, $reference) || "(-)";
 			print <<END;
 <table border="0" cellpadding="2" cellspacing="10" width="100%">
 	<tbody>
@@ -154,16 +153,14 @@ END
 			showSavedBid($preferences, $user, $reference);
 			
 			# DONE: otherwise list PC member and shepherd
-			
-			# TODO: should we remove author emails?
+			# DONE: should remove author emails
 			print <<END;
 			</td>
 			<td valign="top" align="right" width="3%">
 				<a href="?token=$token&action=download&label=$label">$reference</a>
 			</td>
 			<td valign="top">
-			 	$authors <!--<br/>
-			 	<a href="mailto:$email">$email--></a>
+			 	$authors </a>
 			</td>
 		</tr>
 END
@@ -200,31 +197,21 @@ END
 				<p>Tags: $tags</p>
 			</td>
 		</tr>
-		<tr>
-			<td valign="top"></td>
-			<td valign="top"></td>
-			<td><image border="0" src="/europlop/images/vote.png"/></a>&nbsp; $averageVote pre-shepherding vote &nbsp; (1:it's a joy, 2:good ideas, 3:strong shepherd needed, 4:high risk)
-			</td>
-		</tr>
-		</tbody>
+	</tbody>
 </table>
 END
 		}
 	} 
 		
 	Format::endForm("Submit");
-	
+		
 	Format::createFooter();
 }
 
 # show submissions currently shepherded
 sub handleShepherdedPapers {
-	my $session = $q->param("session");
-	my $sessionInfo = Session::check($session);
-	Assert::assertTrue($sessionInfo, 
-		"Session expired. Please sign in first.");
-		
-	my ($user, $role) = $sessionInfo =~ /:(.+?):(.+)/;	
+	my $session = checkCredentials();
+	my ($user, $role) = Session::getUserRole($session);	
 
 	Format::createHeader("Shepherded Papers", "", "");
 	
@@ -341,10 +328,8 @@ END
 }
 
 sub handleSelection {
-	my $session = $q->param("session");
-	my $sessionInfo = Session::check($session);
-	Assert::assertTrue($sessionInfo, 
-		"Session expired. Please sign in first.");
+	my $session = checkCredentials();
+	my ($user, $role) = Session::getUserRole($session);	
 
 	# DONE: check that at least one selection has been made
 	my @papers;
@@ -644,20 +629,8 @@ sub handleDownload {
 }
 
 sub handleAssignments {
-	my $session = $q->param("session");
-	my $sessionInfo = Session::check($session);
-	Assert::assertTrue($sessionInfo, 
-		"Session expired. Please sign in first.");
-
-	my ($user, $role) = $sessionInfo =~ /:(.+?):(.+)/;	
-	unless ($user) {
-		Assert::assertEquals("email", "@", "Please enter a valid email address");
-		$user = $q->param("email");
-		$role = Review::authenticate($user, $q->param("password"));
-		Session::setUser($q->param("session"), $user, $role);
-	}
-	Assert::assertTrue($role eq "shepherd" || $role eq "pc" || $role eq "admin",
-		"Only shepherds, PC members, and shepherds can perform this action.");
+	my $session = checkCredentials();
+	my ($user, $role) = Session::getUserRole($session);	
 
 	# TODO: email -> user id
 	$q->param( "name" => Review::getReviewerName($user) );
@@ -887,16 +860,8 @@ END
 }
 
 sub handleVote {
-	my $session = $q->param("session");
-	my $sessionInfo = Session::check($session);
-	Assert::assertTrue($sessionInfo, 
-		"Session expired ($session, $sessionInfo). Please sign in first.");
-		
-	my ($user, $role) = $sessionInfo =~ /:(.+?):(.+)/;	
-	Assert::assertTrue($user && $role, 
-		"Session expired ($session, $sessionInfo). Please sign in first.");
-	Assert::assertTrue($role eq "shepherd" || $role eq "pc" || $role eq "admin",
-		"Only shepherds, PC members, and shepherds can perform this action.");
+	my $session = checkCredentials();
+	my ($user, $role) = Session::getUserRole($session);	
 
 	my $reference = $q->param("reference");
 	Format::createHeader("Vote", "Enter your decision on paper $reference", "js/validate.js", 1);	
@@ -985,14 +950,8 @@ END
 }
 
 sub handleVoteSubmitted {
-	my $session = $q->param("session");
-	my $sessionInfo = Session::check($session);
-	Assert::assertTrue($sessionInfo, 
-		"Session expired. Please sign in first.");
-		
-	my ($user, $role) = $sessionInfo =~ /:(.+?):(.+)/;	
-	Assert::assertTrue($user && $role, 
-		"Session expired. Please sign in first.");
+	my $session = checkCredentials();
+	my ($user, $role) = Session::getUserRole($session);	
 
 	my $vote = $q->param("vote");
 	# -1: not assessed
