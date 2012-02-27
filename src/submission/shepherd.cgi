@@ -28,6 +28,8 @@ our $script = "shepherd.cgi";
 our $config = Serialize::getConfig();
 our $WEBCHAIR_EMAIL = $config->{"web_chair_email"};
 our $CONFERENCE = $config->{"conference"};
+our $CONFERENCE_ID = $config->{"conference_id"};
+our $CONFERENCE_WEBSITE = $config->{"conference_website"};
 our $baseUrl = $config->{"url"};
 our $PROGRAM_CHAIR_TITLE = $config->{"program_chair_title"};
 our $FOCUS_GROUP_TRACK = $config->{"focus_group_track"};
@@ -51,6 +53,7 @@ if ($config->{"pc_can_view_all"}) {
 }
 
 # remember whether a new account was created
+TODO: deprecated
 my $newAccountCreated = 0;
 
 BEGIN {
@@ -1267,33 +1270,32 @@ END
 	Format::createFooter();
 }
 
-sub handleSendPcLogin {
-	unless ($q->param("email")) {
-		Format::createHeader("Password help", "", "");
-		Format::startForm("post", "send_pc_login");
-		Format::createFreetext("To retrieve your password, please provide the email address you use to log in.");
-		Format::createTextWithTitle("Enter your email address", 
-			"My email address is", "email", 40);
-		Format::createFreetext("Once you submit, your password will be sent to this email address.");
-		Format::endForm("Send password");
-		Format::createFooter();
-	} else {
-		my $status = Review::sendPasswordForEmail($q->param("email"));
-		if ($config->{"debug"}) {
-			Format::createHeader("Password help", "", "");
-			print "Email: <pre>$status</pre>";
-			Format::createFooter();
-		} else {
-			handleSignIn();
-		}
-
-	}
-}
-
 # need this as a proxy for modules that refer ::handleError
 sub handleError {
 	Audit::handleError(@_, 1);
 }
+
+# Utilities
+
+sub checkCredentials {
+	my $session = $q->param("session");
+	Assert::assertTrue(Session::check($session), 
+		"Session expired. Please sign in first.");
+	my ($user, $role) = Session::getUserRole($q->param("session"));	
+	Assert::assertTrue($user, "You are not logged in");
+	Assert::assertTrue($role eq "shepherd" || $role eq "chair" || $role eq "pc" || $role eq "admin", 
+		"You are not allowed to access this site");
+	return $session;
+}
+
+sub showSharedMenu {
+	my ($session) = @_;
+	
+	print <<END;
+	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
+END
+}
+
 
 # Mails
 
@@ -1734,8 +1736,6 @@ if ($action eq "sign_in") {
 	handleVoteSubmitted();
 } elsif ($action eq "status") {
 	handleStatus();
-} elsif ($action eq "send_pc_login") {
-	handleSendPcLogin();
 } else {
 	Audit::handleError("No such action");
 }

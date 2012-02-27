@@ -383,7 +383,6 @@ END
 sub handleChangePassword {
 	my $session = $q->param("session");
 	my ($user, $role) = Session::getUserRole($session);	
-	
 	Assert::assertTrue($user, 
 		"You are not allowed to change this password");
 	
@@ -392,7 +391,6 @@ sub handleChangePassword {
 	
 	my $password = $q->param("password");
 	my $passwordConfirmed = $q->param("passwordConfirmed");
-		
 	
 	# check whether the passwords match
 	Assert::assertTrue($password eq $passwordConfirmed, 
@@ -438,6 +436,11 @@ END
 		<li><a href="submit.cgi?action=submit&session=$session&status=existing&reference=$reference">Update your submission (#$reference): $title</a></li>
 END
 	}
+	
+	# ... or sign up as a shepherd
+	Format::createAction($SHEPHERD_SUBMISSION_OPEN, $baseUrl . "/shepherd.cgi?session=$session", 
+		"Become a shepherd", "we are not looking for shepherds at this time");
+	
 	print <<END;
 	</ul>
 END
