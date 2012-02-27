@@ -53,7 +53,7 @@ if ($config->{"pc_can_view_all"}) {
 }
 
 # remember whether a new account was created
-TODO: deprecated
+# TODO: deprecated
 my $newAccountCreated = 0;
 
 BEGIN {
@@ -62,160 +62,20 @@ BEGIN {
 
 # Handlers
 
-sub handleSignIn {
-	Format::createHeader("Shepherd > Sign in", "", "js/validate.js");
-	
-	my $disabled = $config->{"shepherd_submission_open"} || 
-		$config->{"shepherding_open"} ? "" : "disabled";
-		
-#	print <<END;
-#<h3>Log in as</h3>
-#<p>
-#<input name="role" type="radio" value="author" 
-#	onClick="document.location='$baseUrl/submit.cgi'"/> Author &nbsp;
-#<input name="role" type="radio" value="shepherd" checked
-#	onClick="document.location='$baseUrl/shepherd.cgi'" $disabled/> Shepherd &nbsp;
-#<input name="role" type="radio" value="pc"
-#	onClick="document.location='$baseUrl/screen.cgi'"/> PC Member (Screening) &nbsp;
-#<input name="role" type="radio" value="admin" 
-#	onClick="document.location='$baseUrl/admin.cgi'"/> Chair &nbsp;
-#<input name="role" type="radio" value="participant"
-#	onClick="document.location='$baseUrl/register.cgi'"/> Participant
-#</p>
-#END
-
-	# form action selected based on mode (submissions or assignments)
-	Format::startForm("post", $mode, "return checkShepherdSignInForm(this)");
-	Format::createHidden("session", Session::create(Session::uniqueId(), $timestamp));
-
-	if ($mode eq "submissions") {
-		print <<END;
-<p>Thank you for your interest in shepherding a paper for $CONFERENCE.</p>
-END
-	} elsif ($mode eq "assignments") {
-		print "<p>Please log in as a shepherd for $CONFERENCE.</p>\n";
-	} else {
-		print "<p>No shepherding is taking place right now.</p>\n";
-		Format::createFooter();
-		return;
-	}
-	
-#	Format::createTextWithTitle("What is your email address?", 
-#		"My email address is:", "email", 40);
-		
-	print <<END;
-			<table cellpadding="0" cellspacing="5">
-				<tr>
-					<td colspan="1">My email address is:</td>
-					<td width="10"></td>
-					<td><input name="email" type="text"/></td>
-				</tr>
-END
-	if ($mode eq "submissions") {
-		print <<END;
-				<tr>
-					<td>My name is:</td>
-					<td width="10"></td>
-					<td colspan="2"><input name="name" type="text"/></td>
-				</tr>
-				<tr>
-					<td>The access code is:</td>
-					<td width="10"></td>
-					<td><input name="code" type="password"
-						onFocus="this.form.status[0].checked=true"/>
-						<input name="status" type="hidden" value="new"></td>
-				</tr>
-			<!--
-				<tr>
-					<td height="10"></td>
-				</tr>
-				<tr>
-					<td><input name="status" type="radio" value ="existing"/></td>
-					<td colspan="3">No, I already have a password:</td>
-				</tr>
-				<tr>
-					<td height="5"></td>
-				</tr>
-				<tr>
-					<td></td>
-					<td>My password is:</td>
-					<td width="10"></td>
-					<td><input name="password" type="password"
-						onFocus="this.form.status[1].checked=true"/></td>
-				</tr>
-			-->
-			</table>
-END
-	} else {
-		print <<END;
-				<tr>
-					<td colspan="2">My password is:</td>
-					<td width="10"></td>
-					<td><input name="password" type="password"/></td>
-				</tr>
-			</table>
-END
-	}
-
-	Format::endForm("Sign in");
-
-	unless ($mode eq "submissions") {
-		Format::createFreetext(
-			"<a href=\"$baseUrl/$script?action=send_pc_login\">Forgot your password? Click here</a>");
-	}
-
-	Format::createFooter();
-}
-
 # show submissions (except ones that were rejected during screening)
 sub handleSubmissions {
-	my $session = $q->param("session");
-	my $sessionInfo = Session::check($session);
-	Assert::assertTrue($sessionInfo, 
-		"Session expired. Please sign in first.");
+	my $session = checkCredentials();
+	my ($user, $role) = Session::getUserRole($session);	
 		
-	my ($user, $role) = $sessionInfo =~ /:(.+?):(.+)/;	
-	
-	unless ($user) {
-		# TODO: shepherds need to create an account
-		Assert::assertTrue(0, "You need to create an account first");
+	Format::createHeader("Shepherd > Bids", "", "js/validate.js");
 		
-		Assert::assertEquals("email", "@", "Please enter a valid email address");
-		if ($q->param("status") eq "new") {
-			unless ($q->param("code") eq $config->{"shepherd_password"}) {
-				Audit::handleError("Please reenter the access code");
-			}
-			Assert::assertNotEmpty("name", "Please enter your name");
-			$role = "shepherd";
-		} else {
-			unless ($role = Review::authenticate($q->param("email"), $q->param("password"))) {
-				# user is shepherd, pc, or admin
-			 	Audit::handleError("Sorry, you no not have access to this site");
-			}
-			$q->param( "name" => Review::getReviewerName($q->param("email")) );
-		}
-		Session::setUser($q->param("session"), $q->param("email"), $role);
-		
-		# need to set user, checking later to find existing bids
-		$user = $q->param("email");
-	}
-	Assert::assertTrue($role eq "shepherd" || $role eq "pc" || $role eq "admin",
-		"Only shepherds, PC members, and shepherds can perform this action.");
-		
-	Format::createHeader("Bids", "", "js/validate.js");
-	
-		print <<END;
-	<p>Oops, this feature is unavailable at this time.</p>
-END
-
-	Format::createFooter();
-	return;
-	
 	Format::createFreetext("Please bid for the papers you wish to shepherd. If you provide us with multiple options, we can assign you a paper even if your top preference has already been assigned to somebody else.");
 	Format::createFreetext("If you only want to submit a specific paper, just bid once and email the chair that you really want that paper.");
 	Format::createFreetext("If you had previously made a bid for a paper, your old bid will be shown in <font color=green>green</font>.");
 	Format::createFreetext("<em>Note: By clicking on the number left to the paper description, you can download the paper.</em>");
 	
+	# TODO: don't show the votes, but color-code paper in bids.cgi with pre-shepherding vote
+	# don't think the line with vote.png belongs here, anyhow (cut and paste?)
 	print <<END;
 	<h4>Legend</h4>
 	<p>If you want to shepherd a paper, choose your level of priority in the dropdown menu on the left:</p>
@@ -231,10 +91,7 @@ END
 END
 
 	Format::startForm("post", "selection", "");
-	
 	Format::createHidden("session", $q->param("session"));
-	Format::createHidden("email", $q->param("email"));
-	Format::createHidden("name", $q->param("name"));
 
 	my $votes = Screen::votes();
 	my $preferences = Shepherd::preferencesByUser();
@@ -298,6 +155,7 @@ END
 			
 			# DONE: otherwise list PC member and shepherd
 			
+			# TODO: should we remove author emails?
 			print <<END;
 			</td>
 			<td valign="top" align="right" width="3%">
@@ -1707,12 +1565,10 @@ sub lastUpdatedOnDate {
 
 # Main dispatcher
 
-my $action = $q->param("action") || "sign_in";
+my $action = $q->param("action") || "submissions";
 Format::sanitizeInput();
 Audit::trace($action);
-if ($action eq "sign_in") {
-	handleSignIn();
-} elsif ($action eq "submissions") {
+if ($action eq "submissions") {
 	handleSubmissions();
 } elsif ($action eq "selection") {
 	handleSelection();

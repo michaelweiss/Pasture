@@ -248,6 +248,17 @@ sub handleChangeRole {
 	print $q->redirect(-uri => "$baseUrl/$script?action=menu&session=$session");
 }
 
+# Handle shepherd request
+sub handleBecomeShepherd {
+	my $session = $q->param("session");
+	my ($user, $role) = Session::getUserRole($session);	
+	
+	Session::setUser($session, $user, "shepherd");
+	
+	# redirect to handle menu request
+	print $q->redirect(-uri => $baseUrl . "/shepherd.cgi?session=$session");
+}
+
 # Handle profile request
 sub handleProfile {
 	my $user, $firstName, $lastName;
@@ -438,7 +449,7 @@ END
 	}
 	
 	# ... or sign up as a shepherd
-	Format::createAction($SHEPHERD_SUBMISSION_OPEN, $baseUrl . "/shepherd.cgi?session=$session", 
+	Format::createAction($SHEPHERD_SUBMISSION_OPEN, "$baseUrl/$script?action=shepherd&session=$session", 
 		"Become a shepherd", "we are not looking for shepherds at this time");
 	
 	print <<END;
@@ -527,6 +538,8 @@ if ($action eq "sign_in") {
 	handleProfile();
 } elsif ($action eq "change_role") {
 	handleChangeRole();
+} elsif ($action eq "shepherd") {
+	handleBecomeShepherd();
 } elsif ($action eq "send_login") {
 	handleSendLogin();
 } elsif ($action eq "password") {
