@@ -19,6 +19,8 @@ use Core::Audit;
 use Core::Review;
 use Core::Shepherd;
 use Core::Decision;
+use Core::User;
+use Core::Contact;
 
 our $q = new CGI;
 our $timestamp = time();
@@ -355,11 +357,10 @@ print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
 
-	my $email = $q->param("email");
-	my ($firstName) = $q->param("name") =~ /^(\w+)/;
-
+	my %profile = User::loadUser($user);
+	
 	print <<END;
-<p>Dear $firstName,</p>
+<p>Dear $profile{"firstName"},</p>
 <p>thanks for volunteering as a shepherd for the following papers:</p>
 	<p>
 		<table>
@@ -369,7 +370,7 @@ END
 	my $papers = "";
 	foreach (sort @papers) {
 		my ($priority, $reference, $timestamp) = split(/, /);
-		Shepherd::savePreference($timestamp, $email, $reference, $priority);
+		Shepherd::savePreference($timestamp, $user, $reference, $priority);
 		my $record = Records::getRecord($timestamp . "_" . $reference);
 		my $title = $record->param("title");
 		$papers .= "$priority, $reference, $timestamp\n";
@@ -377,25 +378,8 @@ END
 			<tr><td width="20" align="left">$priority</td><td>$title</td></tr>
 END
 	}
-	
-	# get password associated with email 
-	# ... check if pc member, chair, or existing shepherd
-	my $password = Review::getPassword($email);
-	  
-	# create shepherding account if no password assigned to email
-  	unless ($password) {
-	    my $role = "shepherd";
-	    Review::addReviewer($q->param("email"), $q->param("name"), $role);
-		# if user is an author use their author password
-		$password = Password::retrievePassword($email);
-		# ... otherwise generate one
-		unless ($password) {
-	    	$password = Password::generatePassword(6);
-	    	$newAccountCreated = 1;
-		} 
-		# authors as well as new shepherds will be added
-	    Review::addRole($q->param("email"), $password, $role);
-  	}
+		  
+	Role::addRole($user, $CONFERENCE_ID, "shepherd");
 
 	print <<END;		
 		</table>
@@ -411,14 +395,9 @@ END
 	</p>
 	
 	<p>Your bid has been sent to the $CONFERENCE $PROGRAM_CHAIR_TITLE who will confirm them as soon as possible.<p>
-	<p>Please keep in mind that there may be more then one volunteer for a specific paper. This is the reason why we cannot start shepherding immediately.</p>
+	<p>Please keep in mind that there may be more then one volunteer for a specific paper. This is the reason why we cannot 
+	start shepherding immediately.</p>
 END
-
-	if ($newAccountCreated) {
-		print <<END;
-	<p>We have created a new account for you. The user name is your email address and the password is "$password". If selected as a shepherd, you need this account to submit your shepherding recommendations.</p>
-END
-	}
 
 	print <<END;
 	<p>Thanks for being patient,</p>
@@ -428,12 +407,15 @@ END
 END
 	Format::createFreetext("You should receive a confirmation email in a few minutes. If not, please contact the web chair at <a href=\"mailto:$WEBCHAIR_EMAIL\">$WEBCHAIR_EMAIL</a>.");
 	
-	sendConfirmationOfSherpherdingBid($email, $firstName, $papers);
-	notifyShepherdingBid($q->param("name"), $email, $papers);
+	my %contact = Contact::loadContact($user);
+	
+	sendConfirmationOfSherpherdingBid($contact{"email"}, $profile{"firstName"}, $papers);
+	notifyShepherdingBid($profile{"firstName"} . " " . $profile{"lastName"}, $contact{"email"}, $papers);
 		
 	Format::createFooter();
 }
 
+# deprecated
 sub handleAccept {
 	my $token = Access::token($q->param("email") . "_" . $q->param("label"));
 	unless ($token eq $q->param("token")) {
@@ -487,6 +469,7 @@ END
 	Format::createFooter();
 }
 
+# deprecated
 sub handleReject {
 	my $token = Access::token($q->param("email") . "_" . $q->param("label"));
 	unless ($token eq $q->param("token")) {
@@ -534,6 +517,7 @@ END
 	Format::createFooter();
 }
 
+# deprecated
 sub handleAcceptConfirmed {
 	my $session = $q->param("session");
 	my $sessionInfo = Session::check($session);
@@ -568,6 +552,7 @@ sub handleAcceptConfirmed {
 	Format::createFooter();
 }
 
+# deprecated
 sub handleRejectConfirmed {
 	my $session = $q->param("session");
 	my $sessionInfo = Session::check($session);
@@ -631,9 +616,6 @@ sub handleDownload {
 sub handleAssignments {
 	my $session = checkCredentials();
 	my ($user, $role) = Session::getUserRole($session);	
-
-	# TODO: email -> user id
-	$q->param( "name" => Review::getReviewerName($user) );
 	
 	Format::createHeader("Review of updated submissions", "", "js/validate.js");
 	
@@ -648,7 +630,9 @@ END
 	Format::createFooter();
 	return;
 	
-	my ($firstName) = $q->param("name") =~ /^(\w+)/;
+	# DONE: email -> user id
+	my %profile = User::loadUser($user);
+	my $firstName = $profile{"firstName"};
 	
 	# get all record metadata
 	my %records = Records::getAllRecords(%labels);
@@ -1137,10 +1121,6 @@ END
 		my $title = $record->param("title");
 		print MAIL "\t$priority\t$title\n";
 	}
-
-	my $password = Review::getPassword($email);
-	
-	my $newAccountMessage = $newAccountCreated ? "We have created a new account for you. The user name is your email address and the password is \"$password\". If selected as a shepherd, you need this account to submit your shepherding recommendations." : "";
 	
 	print MAIL <<END;
 	
@@ -1152,9 +1132,6 @@ Legend:
 Your bid has been sent to the $CONFERENCE $PROGRAM_CHAIR_TITLE who will confirm them as soon as possible. 
 
 Please keep in mind that there may be more then one volunteer for a specific paper. This is the reason why we cannot start shepherding immediately.
-
-
-$newAccountMessage
 
 Thanks for being patient,
 
@@ -1191,13 +1168,8 @@ END
 		
 Paper: $reference
 Priority: $priority
-Accept: $reflectUrl/shepherd.cgi?action=accept&email=$email&label=$label&token=$token
 END
 	}
-	print MAIL <<END;
-	
-Click on the corresponding link to accept a bid. You will be asked to confirm, before the action takes effect.
-END
 	close (MAIL);
 	
 	my $chair_email = $config->{"program_chair_email"};
