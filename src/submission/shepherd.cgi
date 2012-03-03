@@ -69,8 +69,9 @@ sub handleSubmissions {
 	my $session = checkCredentials();
 	my ($user, $role) = Session::getUserRole($session);	
 		
-	Format::createHeader("Shepherd > Bids", "", "js/validate.js");
-		
+	Format::createHeader("Shepherd > Bids", "", "js/validate.js");	
+	showSharedMenu($session);
+	
 	print <<END;
 <div id="widebox">
 END
@@ -427,8 +428,8 @@ END
 	Format::createFooter();
 }
 
-# deprecated
 sub handleAccept {
+	# TODO: review how this works and convert to regular session check
 	my $token = Access::token($q->param("email") . "_" . $q->param("label"));
 	unless ($token eq $q->param("token")) {
 		Audit::handleError("You are not allowed to perform this action");
@@ -442,6 +443,7 @@ sub handleAccept {
 	my ($reference) = $q->param("label") =~ /_(\d+)$/;
 
 	Format::createHeader("Accept", "", "js/validate.js");
+	showSharedMenu($session);
 	
 	my $record = Records::getRecord($q->param("label"));
 	my $authors = Review::getAuthors($record);
@@ -481,7 +483,6 @@ END
 	Format::createFooter();
 }
 
-# deprecated
 sub handleReject {
 	my $token = Access::token($q->param("email") . "_" . $q->param("label"));
 	unless ($token eq $q->param("token")) {
@@ -495,7 +496,8 @@ sub handleReject {
 	my ($reference) = $q->param("label") =~ /_(\d+)$/;
 	
 	Format::createHeader("Reject", "", "js/validate.js");
-
+	showSharedMenu($session);
+	
 	my $record = Records::getRecord($q->param("label"));
 	my $authors = Review::getAuthors($record);
 	my $title = $record->param("title");

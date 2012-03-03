@@ -51,53 +51,14 @@ BEGIN {
 
 # Handlers
 
-sub handleSignIn {
-	Format::createHeader("Sign in", "", "js/validate.js");
-	
-#	print <<END;
-#<h3>Log in as</h3>
-#<p><dd>
-#<input name="role" type="radio" value="author" 
-#	onClick="document.location='$baseUrl/submit.cgi'"/> Author &nbsp;
-#<input name="role" type="radio" value="shepherd" disabled
-#	onClick="document.location='$baseUrl/shepherd.cgi'"/> Shepherd &nbsp;
-#<input name="role" type="radio" value="pc" 
-#	onClick="document.location='$baseUrl/screen.cgi'"/> PC Member &nbsp;
-#<input name="role" type="radio" value="admin" checked
-#	onClick="document.location='$baseUrl/admin.cgi'"/> Chair &nbsp;
-#</dd></p>
-#END
-
-	Format::startForm("post", "bids");
-	Format::createHidden("session", Session::create(Session::uniqueId(), $timestamp));
-			
-	print <<END;
-			<p>You need an administrator password to access this part of the site.</p>
-			
-			<table cellpadding="0">
-				<tr>
-					<td>Admin user name:</td>
-					<td width="10"></td>
-					<td><input name="user" type="text"/></td>
-				</tr><tr>
-					<td>Password:</td>
-					<td width="10"></td>
-					<td><input name="password" type="password"/></td>
-				</tr>
-			</table>
-END
-
-	Format::endForm("Sign in");
-	Format::createFooter();
-}
-
 # show bids
 sub handleBids {
 	my $session = checkCredentials();
 	my ($user, $role) = Session::getUserRole($session);	
 	
 	Format::createHeader("Bids", "", "js/validate.js");
-
+	showSharedMenu($session);
+	
 	my %records = Records::getAllRecords(Records::listCurrent());
 	my $numberOfRecords = scalar keys %records;
 	%titles = getTitles(\%records);
@@ -273,12 +234,10 @@ END
 
 # Main dispatcher
 
-my $action = $q->param("action") || "sign_in";
+my $action = $q->param("action") || "bids";
 Format::sanitizeInput();
 Audit::trace($action);
-if ($action eq "sign_in") {
-	handleSignIn();
-} elsif ($action eq "bids") {
+if ($action eq "bids") {
 	handleBids();
 } elsif ($action eq "export") {
 	handleExport();
