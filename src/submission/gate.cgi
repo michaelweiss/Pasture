@@ -143,6 +143,8 @@ END
 		adminMenu($session, $user);
 	} elsif ($role eq "pc") {
 		pcMenu($session, $user);
+	} elsif ($role eq "shepherd") {
+		shepherdMenu($session, $user);
 	} else {
 		print "<p>Oops, nothing at all in this role.</p>";
 	}
@@ -482,6 +484,22 @@ sub adminMenu {
 		<li><a href="admin.cgi?action=participants&session=$session">View participants</a></li>
 		<li><a href="admin.cgi?action=participants&session=$session&format=csv">View participants as CSV list</a></li>
 	-->
+	</ul>
+END
+}
+
+sub shepherdMenu {
+	my ($session, $user) = @_;
+	print <<END;
+	<ul>
+END
+	
+	Format::createAction($SHEPHERD_SUBMISSION_OPEN, "$baseUrl/$script?action=shepherd&session=$session", 
+		"Submit additional bids", "no more bids required");
+	
+	print <<END;
+		<li><a href="shepherd.cgi?action=shepherded_papers&user=$user&role=pc&session=$session">View all papers you are shepherding</a></li>
+		<li><a href="shepherd.cgi?action=assignments&session=$session">Screen updated submissions</a></li>
 	</ul>
 END
 }

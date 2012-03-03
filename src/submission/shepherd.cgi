@@ -379,7 +379,9 @@ END
 END
 	}
 		  
-	Role::addRole($user, $CONFERENCE_ID, "shepherd");
+	unless (Role::hasRole($user, $CONFERENCE_ID, "shepherd")) {
+		Role::addRole($user, $CONFERENCE_ID, "shepherd");
+	}
 
 	print <<END;		
 		</table>
@@ -1106,7 +1108,8 @@ sub sendConfirmationOfSherpherdingBid {
 	my ($email, $firstName, $papers) = @_;
 
 	# DONE: send email to bidder with bids and password
-	my $tmpFileName = Email::tmpFileName($timestamp, $firstName);
+	my ($sanitizedName) = $firstName =~ m/([\w\s-]*)/;	
+	my $tmpFileName = Email::tmpFileName($timestamp, $sanitizedName);
 	open (MAIL, ">$tmpFileName");
 	print MAIL <<END;
 Dear $firstName,
@@ -1151,6 +1154,7 @@ END
 # Reminder to $PROGRAM_CHAIR_TITLE
 sub notifyShepherdingBid {
 	my ($shepherd, $email, $papers) = @_;
+	# TODO: should not hardcode Allan's name here
 	my $tmpFileName = Email::tmpFileName($timestamp, "Allan");
 	open (MAIL, ">$tmpFileName");
 	print MAIL <<END;
