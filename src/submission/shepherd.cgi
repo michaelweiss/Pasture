@@ -71,6 +71,10 @@ sub handleSubmissions {
 		
 	Format::createHeader("Shepherd > Bids", "", "js/validate.js");
 		
+	print <<END;
+<div id="widebox">
+END
+
 	Format::createFreetext("Please bid for the papers you wish to shepherd:");
 	print <<END;
 	<ul>
@@ -84,7 +88,7 @@ END
 	# DONE: don't show the votes, but color-code paper in bids.cgi with pre-shepherding vote
 	print <<END;
 	<h4>Legend</h4>
-	<p>If you want to shepherd a paper, choose your level of priority in the dropdown menu on the left:</p>
+	<p>If you want to shepherd a paper, choose your level of priority in the dropdown menu:</p>
 	<p>
 		<table>
 			<tr><td width="20" align="left">1</td><td>I would like to shepherd this paper</td></tr>
@@ -92,6 +96,7 @@ END
 			<tr><td align="left">3</td><td>I am willing to shepherd this paper, but only if nobody else does</td></tr> 
 		</table>
 	</p>
+</div>
 END
 
 	Format::startForm("post", "selection", "");
@@ -360,8 +365,9 @@ END
 	my %profile = User::loadUser($user);
 	
 	print <<END;
+<div id="widebox">
 <p>Dear $profile{"firstName"},</p>
-<p>thanks for volunteering as a shepherd for the following papers:</p>
+<p>Thanks for volunteering as a shepherd for the following papers:</p>
 	<p>
 		<table>
 END
@@ -407,8 +413,12 @@ END
 	<p>$config->{"program_chair"}<br/>
 	$CONFERENCE $PROGRAM_CHAIR_TITLE</p>
 END
-	Format::createFreetext("You should receive a confirmation email in a few minutes. If not, please contact the web chair at <a href=\"mailto:$WEBCHAIR_EMAIL\">$WEBCHAIR_EMAIL</a>.");
+	Format::createFreetext("You should receive a confirmation email in a few minutes.");
 	
+	print <<END;
+</div>
+END
+
 	my %contact = Contact::loadContact($user);
 	
 	sendConfirmationOfSherpherdingBid($contact{"email"}, $profile{"firstName"}, $papers);
@@ -1114,7 +1124,7 @@ sub sendConfirmationOfSherpherdingBid {
 	print MAIL <<END;
 Dear $firstName,
 
-thanks for volunteering as a shepherd for the following papers:
+Thanks for volunteering as a shepherd for the following papers:
 
 END
 
@@ -1207,7 +1217,7 @@ sub rejectBid {
 	print MAIL <<END;
 Dear $firstName,
 
-thanks for volunteering as a shepherd for:
+Thanks for volunteering as a shepherd for:
 
 ($reference)\t$authors
 \t$title
