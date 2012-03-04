@@ -73,7 +73,7 @@ sub handleSubmissions {
 	showSharedMenu($session);
 	
 	print <<END;
-<div id="widebox">
+	<div id="widebox">
 END
 
 	Format::createFreetext("Please bid for the papers you wish to shepherd:");
@@ -97,7 +97,7 @@ END
 			<tr><td align="left">3</td><td>I am willing to shepherd this paper, but only if nobody else does</td></tr> 
 		</table>
 	</p>
-</div>
+	</div>
 END
 
 	Format::startForm("post", "selection", "");
@@ -227,29 +227,17 @@ print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
 
-	print <<END;
-	<p>Oops, this feature is unavailable at this time.</p>
-END
-
-	Format::createFooter();
-	return;
-	
 	my $user = $q->param("user");
 	unless ($user) { # show all
 		Format::createFreetext("The following papers are currently shepherded for $CONFERENCE, which means that an experienced pattern author collaborates with the authors of the submissions to improve them prior to acceptance for $CONFERENCE.");
 	} else {
-		Format::createFreetext("The following papers have been assigned to you as supervising PC member.");
+		Format::createFreetext("The following papers have been assigned to you.");
 	}
 	Format::createFreetext("<em>Note: Click on the email icon next to the author name(s) to send an email to everyone involved with a paper</em><br/><em>Click on the document icon next to the title to download the most recent version of a paper</em>");
 	
 	# TODO: make configurable
 	# Format::createFreetext("The shepherding phase is now closed. Please see the workshop assignments for the list of accepted papers.");
 	
-	print <<END;
-	<table border="0" cellpadding="2" cellspacing="10" width="100%">
-		<tbody>
-END
-
 	my $currentTrack = -1;
 	my %records = Records::getAllRecords(Records::listCurrent());
 	foreach $label (sort { $records{$a}->param("track") . "_" . $records{$a}->param("reference") cmp 
@@ -290,16 +278,14 @@ END
 					my $track = $record->param("track");
 					if ($currentTrack != $track) {
 						print <<END;
-		<tr>
-			<td colspan="1">
-				<h3>$config->{"track_$track"}</h3>
-			</td>
-		</tr>
+		<h3>$config->{"track_$track"}</h3>
 END
 						$currentTrack = $track;
 					}	# if
 			
 					print <<END;
+	<table border="0" cellpadding="2" cellspacing="10" width="100%">
+		<tbody>
 		<tr>
 			<td valign="top">
 			 	<a href="mailto:$email?cc=$shepherd_email,$pc_email&subject=[$CONFERENCE] $title"><img src="/europlop/images/email.gif"></a> &nbsp; $authors
@@ -316,9 +302,10 @@ END
 				<a href="?token=$token&action=download&label=$label"><img width="11" height="11" src="/europlop/images/text.gif"></a> &nbsp;
 				<b>$title</b><br/><font size='-2' color='grey'>Last updated on $lastUpdated</font>
 				<p>$abstract</p>
-				<hr/>
 			</td>
 		</tr>
+		</tbody>
+	</table>
 END
     			}	# if
 			}	# if
@@ -326,8 +313,6 @@ END
 	}	# foreach
 	
 	print <<END;
-			</tbody>
-	</table>
 	
 	<p>This list will be updated once we have made a final acceptance decision.</p>
 END
@@ -357,7 +342,7 @@ sub handleSelection {
 		Audit::handleError("Please select at least one submission");
 	}
 		
-	Format::createHeader("Bid confirmation", "", "js/validate.js");
+	Format::createHeader("Shepherd > Bid confirmation", "", "js/validate.js");
 	
 print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
@@ -366,7 +351,6 @@ END
 	my %profile = User::loadUser($user);
 	
 	print <<END;
-<div id="widebox">
 <p>Dear $profile{"firstName"},</p>
 <p>Thanks for volunteering as a shepherd for the following papers:</p>
 	<p>
@@ -417,7 +401,6 @@ END
 	Format::createFreetext("You should receive a confirmation email in a few minutes.");
 	
 	print <<END;
-</div>
 END
 	
 	sendConfirmationOfSherpherdingBid(Review::getReviewerEmail($user), $profile{"firstName"}, $papers);
@@ -549,13 +532,13 @@ sub handleAcceptConfirmed {
 	# DONE: update status of paper
 	Shepherd::changeStatus($timestamp, $reference, "assigned");
 	
-	# TODO: record review assignment (PC and shepherd)
-	Shepherd::assign($timestamp, $reference, $user, $pc_email);
+	# DONE: record review assignment (PC and shepherd)
+	Shepherd::assign($timestamp, $reference, $user, $pc);
 
 	Format::createFreetext("Emails have been sent to the shepherd and the sheep.");
 
 	confirmBid($user, $label, $pc);
-	introduceSheepToShepherd($email, $name, $label, $pc, $pc_name);
+	introduceSheepToShepherd($user, $label, $pc, $pc_name);
 	
 	Format::createFooter();
 }
@@ -1260,7 +1243,7 @@ sub confirmBid {
 	print MAIL <<END;
 Dear $firstName,
 
-we are happy to have you as a shepherd for:
+We are happy to have you as a shepherd for:
 
 $reference\t$authors
 \t$title
@@ -1284,15 +1267,22 @@ END
 # MAIL 5
 # To sheep after accept
 sub introduceSheepToShepherd {
-	my ($shepherd_email, $shepherd_name, $label, $pc_email, $pc_name) = @_;
+	my ($shepherd, $label, $pc) = @_;
 	
+	my $shepherd_email = Review::getReviewerEmail($shepherd);
+	my $shepherd_name = Review::getReviewerName($shepherd);
+	my $pc_email = Review::getReviewerEmail($pc);
+	my $pc_name = Review::getReviewerName($pc);
+
 	my $record = Records::getRecord($label);
 	my $authors = Review::getAuthors($record);
 	my $title = $record->param("title");
-	my $sheep_email = $record->param("contact_email");
-	my $sheep_name = $record->param("contact_name");
 	my $reference = $record->param("reference");
 	
+	# TODO: store author id in record, not email
+	my $sheep_email = $record->param("contact_email");
+	my $sheep_name = $record->param("contact_name");
+		
 	my ($firstName) = $sheep_name =~ /^([^\s]+)/;
 	my $password = getSubmitPassword($reference);
 	
@@ -1301,14 +1291,11 @@ sub introduceSheepToShepherd {
 	print MAIL <<END;
 Dear $firstName,
 
-we are happy to inform you that your paper has been accepted for shepherding. We have assigned $shepherd_name ($shepherd_email) as a shepherd for your paper. During the next weeks, you will interact closely with your shepherd. He/she will read your paper, provide comments, ask questions, offer suggestions for improvement, ...
+We are happy to inform you that your paper has been accepted for shepherding. We have assigned $shepherd_name ($shepherd_email) as a shepherd for your paper. During the next weeks, you will interact closely with your shepherd. He/she will read your paper, provide comments, ask questions, offer suggestions for improvement, ...
 
-$pc_name ($pc_email) from the $CONFERENCE Programme Committee will observe your interaction with the shepherd. He/she can act as a third voice whenever you or your shepherd feel that there's a problem in the process. The PC member will also be one of the final reviewers for your paper. Please keep the PC member in the loop by cc-ing him/her to all mails exchanged with the shepherd.
+$pc_name ($pc_email) from the $CONFERENCE Program Committee will observe your interaction with the shepherd. He/she can act as a third voice whenever you or your shepherd feel that there's a problem in the process. The PC member will also be one of the final reviewers for your paper. Please keep the PC member in the loop by cc-ing him/her to all mails exchanged with the shepherd.
 
-As a reaction to the shepherd's comments, you will usually create a new version of your paper. Please ensure that you upload this new version to the $CONFERENCE submission system. Here's the access info again:
-
-Reference: $reference
-Password: $password
+As a reaction to the shepherd's comments, you will usually create a new version of your paper. Please ensure that you upload this new version to the $CONFERENCE submission system. 
 
 Please work hard with your shepherd to create the best possible quality until the final review due date, which is $config->{"second_draft_due_date"}.
 

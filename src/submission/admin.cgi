@@ -531,13 +531,14 @@ END
 
 	foreach $assignment (values %$assignments) {
 		# TODO: assignments linked to users, not emails
-		my $email = $assignment->{"shepherd"}; 
+		my $user = $assignment->{"shepherd"};
+		my $email = Review::getReviewerEmail($user);
 		unless ($emails) {
 			$emails = $email;
 		} else {
 			$emails .= "," . $email;
 		}
-		my $name = Review::getReviewerName($email);
+		my $name = Review::getReviewerName($user);
 		print <<END;
 	<tr>
 		<td>$name</td>
