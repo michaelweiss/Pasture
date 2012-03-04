@@ -419,11 +419,9 @@ END
 	print <<END;
 </div>
 END
-
-	my %contact = Contact::loadContact($user);
 	
-	sendConfirmationOfSherpherdingBid($contact{"email"}, $profile{"firstName"}, $papers);
-	notifyShepherdingBid($profile{"firstName"} . " " . $profile{"lastName"}, $contact{"email"}, $papers);
+	sendConfirmationOfSherpherdingBid(Review::getReviewerEmail($user), $profile{"firstName"}, $papers);
+	notifyShepherdingBid(Review::getReviewerName($user), Review::getReviewerEmail($user), $papers);
 		
 	Format::createFooter();
 }
@@ -457,7 +455,7 @@ sub handleAccept {
 <p>Paper $reference has already been assigned to $name:</p>
 <dd><p>$authors, <b>$title</b></p></dd>
 END
-		Session::invalidate($session);
+		# Session::invalidate($session);
 		
 	} else {
 		
@@ -510,7 +508,7 @@ sub handleReject {
 <p>Paper $reference has not been assigned to anyone yet:</p>
 <dd><p>$authors, <b>$title</b></p></dd> 
 END
-		Session::invalidate($session);
+		# Session::invalidate($session);
 		
 	} else {
 		
@@ -1166,8 +1164,7 @@ END
 # Reminder to $PROGRAM_CHAIR_TITLE
 sub notifyShepherdingBid {
 	my ($shepherd, $email, $papers) = @_;
-	# TODO: should not hardcode Allan's name here
-	my $tmpFileName = Email::tmpFileName($timestamp, "Allan");
+	my $tmpFileName = Email::tmpFileName($timestamp, "Chair");
 	open (MAIL, ">$tmpFileName");
 	print MAIL <<END;
 Shepherd: $shepherd ($email)

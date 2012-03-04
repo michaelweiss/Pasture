@@ -34,6 +34,7 @@ our $CONFERENCE = $config->{"conference"};
 our $CONFERENCE_ID = $config->{"conference_id"};
 our $CONFERENCE_WEBSITE = $config->{"conference_website"};
 our $SUBMISSION_OPEN = $config->{"submission_open"};
+our $SCREEN_OPEN = $config->{"sceeen_open"};
 our $SHEPHERD_SUBMISSION_OPEN = $config->{"shepherd_submission_open"};
 our $baseUrl = $config->{"url"};
 
@@ -437,7 +438,7 @@ END
 
 	# user can submit a paper ...
 	Format::createAction($SUBMISSION_OPEN, $baseUrl . "/submit.cgi?action=submit&session=$session&status=new", 
-		"Submit a new paper", "submission is now closed");
+		"Submit a new paper", "closed");
 	
 	# DONE: need to rewrite getReferencesByAuthor to read from submission log
 	my @references = Submission::lookupSubmissionsByAuthor($user);
@@ -463,8 +464,12 @@ sub pcMenu {
 	my ($session, $user) = @_;
 	print <<END;
 	<ul>
-		<li><a href="screen.cgi?action=submissions&session=$session">Screen initial submissions</a></li>
-		<!-- li>Screen initial submissions (closed)</li> -->
+END
+
+	Format::createAction($SCREEN_OPEN, $baseUrl . "/screen.cgi?action=submissions&session=$session", 
+		"Screen initial submissions", "closed");
+
+	print <<END;
 		<li><a href="shepherd.cgi?action=shepherded_papers&user=$user&role=pc&session=$session">View all papers you are supervising as a PC member</a></li>
 		<li><a href="shepherd.cgi?action=shepherded_papers&session=$session">View all papers being shepherded</a></li>
 		<li><a href="shepherd.cgi?action=assignments&session=$session">Screen updated submissions</a></li>
