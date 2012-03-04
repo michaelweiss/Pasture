@@ -265,7 +265,7 @@ END
 	foreach $label (sort @records) {
 		if ($label =~ /^(\d+)_(\d+)$/) {
 			my $reference = $2;
-			unless (Shepherd::status($reference) eq "reject" || 
+			unless (Shepherd::status($reference) eq "rejected" || 
 					Shepherd::status($reference) eq "withdrawn") {
 				my $record = getRecord($label);
 				my $contactName = $record->param("contact_name");
