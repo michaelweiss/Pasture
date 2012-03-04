@@ -221,7 +221,7 @@ sub handleShepherdedPapers {
 	my $session = checkCredentials();
 	my ($user, $role) = Session::getUserRole($session);	
 
-	Format::createHeader("Shepherded Papers", "", "");
+	Format::createHeader("Shepherd > Shepherded Papers", "", "");
 	
 print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
@@ -428,20 +428,19 @@ END
 
 sub handleAccept {
 	# TODO: review how this works and convert to regular session check
-	my $token = Access::token($q->param("email") . "_" . $q->param("label"));
+	my $token = Access::token($q->param("user") . "_" . $q->param("label"));
 	unless ($token eq $q->param("token")) {
 		Audit::handleError("You are not allowed to perform this action");
 	} 
 					
 	# TODO: email -> user id
 	# can get user name from the session
-	my $email = $q->param("email");
-	my $name = Review::getReviewerName($email);
+	my $user = $q->param("user");
+	my $name = Review::getReviewerName($user);
 	
 	my ($reference) = $q->param("label") =~ /_(\d+)$/;
 
-	Format::createHeader("Accept", "", "js/validate.js");
-	showSharedMenu($session);
+	Format::createHeader("Shepherd > Accept", "", "js/validate.js");
 	
 	my $record = Records::getRecord($q->param("label"));
 	my $authors = Review::getAuthors($record);
@@ -455,13 +454,12 @@ sub handleAccept {
 <p>Paper $reference has already been assigned to $name:</p>
 <dd><p>$authors, <b>$title</b></p></dd>
 END
-		# Session::invalidate($session);
 		
 	} else {
 		
 		Format::startForm("post", "accept_confirmed", "");
 		Format::createHidden("session", Session::create(Session::uniqueId(), $timestamp));
-		Format::createHidden("email", $q->param("email"));
+		Format::createHidden("user", $q->param("user"));
 		Format::createHidden("label", $q->param("label"));
 		Format::createHidden("token", $q->param("token"));
 			
@@ -538,28 +536,26 @@ sub handleAcceptConfirmed {
 	
 	Session::invalidate($session);
 	
-	Format::createHeader("Accept confirmed", "", "js/validate.js");
+	Format::createHeader("Shepherd > Accept confirmed", "", "js/validate.js");
 	
-	# TODO: email -> user id
-	my $email = $q->param("email");
-	my $name = Review::getReviewerName($email);
+	# DONE: email -> user id
+	my $user = $q->param("user");
+	
 	my $label = $q->param("label");
-
 	my ($reference) = $q->param("label") =~ /_(\d+)$/;
 	
-	my $pc_email = $q->param("pc_email");
-	my $pc_name = Review::getReviewerName($pc_email);
+	my $pc = $q->param("pc");
 
 	# DONE: update status of paper
 	Shepherd::changeStatus($timestamp, $reference, "assigned");
 	
 	# TODO: record review assignment (PC and shepherd)
-	Shepherd::assign($timestamp, $reference, $email, $pc_email);
+	Shepherd::assign($timestamp, $reference, $user, $pc_email);
 
 	Format::createFreetext("Emails have been sent to the shepherd and the sheep.");
 
-	confirmBid($email, $name, $label, $pc_email, $pc_name);
-	introduceSheepToShepherd($email, $name, $label, $pc_email, $pc_name);
+	confirmBid($user, $label, $pc);
+	introduceSheepToShepherd($email, $name, $label, $pc, $pc_name);
 	
 	Format::createFooter();
 }
@@ -1244,10 +1240,11 @@ END
 # MAIL 4
 # To shepherd after accept
 sub confirmBid {
-	my ($shepherd_email, $shepherd_name, $label, $pc_email, $pc_name) = @_;
+	my ($shepherd, $label, $pc) = @_;
 	
-	# DONE: lookup name of shepherd
-	my $shepherd_name = Review::getReviewerName($shepherd_email);
+	my $shepherd_email = Review::getReviewerEmail($shepherd);
+	my $shepherd_name = Review::getReviewerName($shepherd);
+	my ($firstName) = $shepherd_name =~ /^(\w+)/;
 
 	my $record = Records::getRecord($label);
 	my $authors = Review::getAuthors($record);
@@ -1255,7 +1252,8 @@ sub confirmBid {
 	my $sheep_email = $record->param("contact_email");
 	my $reference = $record->param("reference");
 	
-	my ($firstName) = $shepherd_name =~ /^(\w+)/;
+	my $pc_email = Review::getReviewerEmail($pc);
+	my $pc_name = Review::getReviewerName($pc);
 
 	my $tmpFileName = Email::tmpFileName($timestamp, $firstName);
 	open (MAIL, ">$tmpFileName");
@@ -1333,20 +1331,21 @@ END
 sub showReviewersOfPaper {
 	my ($reference) = @_;
 	print <<END;
-<select name="pc_email"/>
+<select name="pc"/>
 END
 	my @reviewers = Review::getProgramCommitteeMembers();
 	my %isInitialReviewer = map { $_ => 1 } Review::getReviewersForPaper($reference);
 	my %load = Shepherd::papersAssignedToSupervise();
 	foreach $pc (@reviewers) {
 		my $load = $load{$pc} || 0;
+		my $name = Review::getReviewerName($pc);
 		if ($isInitialReviewer{$pc}) {
 			print <<END;
-	<option value="$pc">* $pc ($load)</option>
+	<option value="$pc">* $name ($load)</option>
 END
 		} else {
 			print <<END;
-	<option value="$pc">$pc ($load)</option>
+	<option value="$pc">$name ($load)</option>
 END
 		}
 	}	

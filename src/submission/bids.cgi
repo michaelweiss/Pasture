@@ -149,11 +149,11 @@ sub showBidsForUser {
 }
 
 sub generateAcceptUrl {
-	my ($email, $timestamp, $reference) = @_;
+	my ($user, $timestamp, $reference) = @_;
 	my $label = $timestamp . "_" . $reference;
-	my $token = Access::token($email . "_" . $label);
+	my $token = Access::token($user . "_" . $label);
 	return $config->{"url"} . 
-		"/shepherd.cgi?action=accept&email=$email&label=$label&token=$token";
+		"/shepherd.cgi?action=accept&user=$user&label=$label&token=$token";
 }
 
 # DEBUG
