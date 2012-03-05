@@ -121,8 +121,9 @@ END
 
 sub showBidsForUser {
 	my ($preferences, $user, $numberOfRecords) = @_;
+	my $name = Review::getReviewerName($user);
 	print "<tr>\n";
-	print "\t<td>$user</td>";
+	print "\t<td>$name</td>";
 	foreach $bid (1..$numberOfRecords) {
 		if ($status{$bid} eq "rejected" || $status{$bid} eq "withdrawn" ||
 			$titles{$bid} =~ "($config->{'focus_group_track'})") {

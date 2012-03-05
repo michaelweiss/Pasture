@@ -1146,21 +1146,14 @@ sub notifyShepherdingBid {
 	my $tmpFileName = Email::tmpFileName($timestamp, "Chair");
 	open (MAIL, ">$tmpFileName");
 	print MAIL <<END;
-Shepherd: $shepherd ($email)
+$shepherd ($email) has volunteered to shepherd the following paper(s):
+
 END
 	foreach (split(/\n/, $papers)) {
 		my ($priority, $reference, $timestamp) = split(/, /);
-		my $label = "${timestamp}_${reference}";
-		# DONE: generate token that is different from the download token
-		my $token = uri_escape(Access::token($email . "_" . $label));
-		my ($reference) = $label =~ /_(\d+)$/;
-
-		my  $reflectUrl = $config->{"reflect_url"} || $config->{"url"};
-		print MAIL <<END;
-		
-Paper: $reference
-Priority: $priority
-END
+		my $record = Records::getRecord($timestamp . "_" . $reference);
+		my $title = $record->param("title");
+		print MAIL "$priority\t$title\n";
 	}
 	close (MAIL);
 	
