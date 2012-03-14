@@ -9,6 +9,7 @@ $debug = $config["debug"];
 
 // form data
 $email = $_POST['email'];
+$cc = $_POST['cc'];
 $subject = $_POST['subject'];
 $body = $_POST['body'];
 
