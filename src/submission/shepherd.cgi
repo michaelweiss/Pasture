@@ -244,20 +244,22 @@ END
 		$records{$b}->param("track") . "_" . $records{$b}->param("reference") } keys %records) {
 		my $record = $records{$label};
 		my $reference = $record->param("reference");
-		unless (Shepherd::status($reference) eq "reject" ||
+		unless (Shepherd::status($reference) eq "rejected" ||
 			Shepherd::status($reference) eq "withdrawn" ||
         	$record->param("track") eq $FOCUS_GROUP_TRACK) {
 			if (Shepherd::status($reference) eq "assigned") {
 				my %assignment = Shepherd::assignedTo($reference);
-				# TODO: email -> user id
-				my $pc_email = $assignment{"pc"};
-				my $shepherd_email = $assignment{"shepherd"};
+				# DONE: email -> user id
+				my $pc = $assignment{"pc"};
+				my $shepherd = $assignment{"shepherd"};
 				# either all, or only for a specific user
 				if (!$user || 
-					$q->param("role") eq "pc" && $pc_email eq $user ||
-					$q->param("role") eq "shepherd" && $shepherd_email eq $user) {
-					my $pc_name = Review::getReviewerName($pc_email);
-					my $shepherd_name = Review::getReviewerName($shepherd_email);
+					$q->param("role") eq "pc" && $pc eq $user ||
+					$q->param("role") eq "shepherd" && $shepherd eq $user) {
+					my $pc_name = Review::getReviewerName($pc);
+					my $shepherd_name = Review::getReviewerName($shepherd);
+					my $pc_email = Review::getReviewerEmail($pc);
+					my $shepherd_email = Review::getReviewerEmail($shepherd);
 					
 					my $authors = Review::getAuthors($record);
 					$authors =~ s|\r\n|, |g;
@@ -293,8 +295,8 @@ END
 		</tr>
 		<tr>
 			<td valign="top" width="97%">
-				PC member: $pc_name<br/>
-				Shepherd: $shepherd_name
+				PC member: <a href="mailto:$pc_email">$pc_name</a><br/>
+				Shepherd: <a href="mailto:$shepherd_email">$shepherd_name</a>
 			</td>
 		</tr>
 		<tr>
