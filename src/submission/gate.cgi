@@ -504,7 +504,7 @@ END
 		"Submit additional bids", "no more bids required");
 	
 	print <<END;
-		<li><a href="shepherd.cgi?action=shepherded_papers&user=$user&role=pc&session=$session">View all papers you are shepherding</a></li>
+		<li><a href="shepherd.cgi?action=shepherded_papers&user=$user&role=shepherd&session=$session">View all papers you are shepherding</a></li>
 		<li><a href="shepherd.cgi?action=assignments&session=$session">Screen updated submissions</a></li>
 	</ul>
 END
