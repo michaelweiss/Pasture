@@ -310,29 +310,34 @@ sub handlePc {
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
 
-	my @pcMembers = Review::getProgramCommitteeMembers();
-	my $emails;	
-
 	print <<END;
 	<div id="widebox">
 		<p>
 			<table>
 END
 
-	foreach my $user (@pcMembers) {
-		# TODO: get email
-		my $email = Review::getReviewerEmail($user);
-		unless ($emails) {
-			$emails = $email;
-		} else {
-			$emails .= "," . $email;
-		}
+	# gather list of pc names and emails
+	my %emails;
+	my @members = Review::getProgramCommitteeMembers();
+	foreach my $user (@members) {
 		my $name = Review::getReviewerName($user);
+		my $email = Review::getReviewerEmail($user);
+		$emails{$name} = $email;
+	}
+	
+	# show sorted list of pc member names and emails
+	my $emails;
+	foreach my $name (sort keys %emails) {
+		unless ($emails) {
+			$emails = $emails{$name};
+		} else {
+			$emails .= "," . $emails{$name};
+		}
 		print <<END;
 	<tr>
 		<td>$name</td>
 		<td width="10"></td>
-		<td><a href="mailto:$email">$email</a></td>
+		<td><a href="mailto:$emails{$name}">$emails{$name}</a></td>
 	</tr>
 END
 	}
