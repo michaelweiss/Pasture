@@ -53,6 +53,19 @@ sub listPrevious {
 	return %pre;
 }
 
+sub listAllVersions {
+	my ($reference) = @_;
+	my @records = list();
+	my @versions;
+	foreach (@records) {
+		if (/_$reference$/) {		# record name ends in reference
+			push (@versions, $_);
+		}
+	}
+	return @versions;
+}
+
+
 sub dumpRecord {
 	my ($q) = @_;
 	print "<hr/>\n";

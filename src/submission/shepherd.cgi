@@ -301,8 +301,14 @@ END
 		</tr>
 		<tr>
 			<td valign="top" width="97%">
-				<a href="?token=$token&action=download&label=$label"><img width="11" height="11" src="/europlop/images/text.gif"></a> &nbsp;
-				<b>$title</b><br/><font size='-2' color='grey'>Last updated on $lastUpdated</font>
+				<a href="?token=$token&action=download&label=$label"><img width="11" height="11" src="/europlop/images/text.gif"></a>
+				<b>$title</b><br/>
+END
+
+#		showSubmissionHistory($reference);
+		
+					print <<END;
+				<font size='-2' color='grey'>Last updated on $lastUpdated</font>
 				<p>$abstract</p>
 			</td>
 		</tr>
@@ -320,6 +326,19 @@ END
 END
 	
 	Format::createFooter();
+}
+
+sub showSubmissionHistory {
+	my ($reference) = @_;
+	my @versions = Records::listAllVersions($reference);
+	my $version = 0;
+	foreach (@versions) {
+		my $token = uri_escape(Access::token($_));
+		print <<END;
+				<a href="?token=$token&action=download&label=$_">$version</a>
+END
+			$version++;
+	}
 }
 
 sub handleSelection {
