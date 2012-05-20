@@ -37,8 +37,6 @@ our $CONFERENCE_WEBSITE = $config->{"conference_website"};
 our $CONFERENCE_CHAIR = $config->{"conference_chair"};
 our $baseUrl = $config->{"url"};
 
-$Format::TEMPLATE = "data/html/header_registration.html";
-
 BEGIN {
 	CGI::Carp::set_message( \&Audit::handleUnexpectedError );
 }
@@ -46,109 +44,23 @@ BEGIN {
 
 # Handlers
 
-sub handleSignIn {
-	Format::createHeader("Registration > Sign in", "", "js/validate.js");
+sub handleRegistration {
+	my $session = checkCredentials();
+	my ($user, $role) = Session::getUserRole($session);	
 		
-	Format::startForm("post", $mode, "return checkRegistrationForm(this)", "");
-	Format::createHidden("session", Session::create(Session::uniqueId(), $timestamp));
-
-	if ($config->{"registration_closed"}) {
-		Format::createFreetext("<font color=red><b>Sorry, but registration for $CONFERENCE is now closed.</b></font>");
-		Format::createFooter();
-		return;
-	}
-	
-	# TODO: disable participant log in, if registration is not yet open
+	Format::createHeader("Register > Register", "", "js/validate.js");	
+	showSharedMenu($session);
 	
 	print <<END;
-<p>Welcome to the registration page for $CONFERENCE. When you register, an account will be created that allows you to update your registration. Note for authors, shepherds, and PC members: this will be your existing account.</p> 
-
-<p>The early registration fee is $config->{"early_registration_fee"} euro. After  $config->{"early_registration_date"}, the fee will be $config->{"late_registration_fee"} euro. A reduced fee applies to accompanying participants and children. Please <a href="mailto:hotel\@kloster-irsee.de?subject=EuroPLoP%202011">contact Kloster Irsee</a> directly for special arrangements.</p>
-
-<table cellspacing="0" cellpadding="0">
-	<tr height="5"></tr>
-	<tr>
-		<td valign="top"><input name="status" type="radio" value="new" checked/></td>
-		<td width="5"></td>
-		<td valign="top">
-			<table cellpadding="0" cellspacing="0">
-				<tr>
-					<td>New registration</td>
-				</tr>
-			</table>
-		</td>
-	</tr>
-	<tr>
-		<td height="5"></td>
-	</tr>
-	<tr>
-		<td valign="top"><input name="status" type="radio" value = "existing"/></td>
-		<td width="5"></td>
-		<td valign="top">
-			<table cellpadding="0" cellspacing="0">
-				<tr>
-					<td>No, my email address is:</td>
-					<td width="10"></td>
-					<td><input name="email" type="text"/></td>
-				</tr>
-				<tr>
-					<td height="5"></td>
-				</tr>
-				<tr>
-					<td>and my password is:</td>
-					<td width="10"></td>
-					<td><input name="password" type="password"/></td>
-				</tr>
-			</table>
-		</td>
-	</tr>
-</table>
+	<div id="widebox">
+	
+	<p>Welcome to the registration page for $CONFERENCE.</p>
 END
-
-	Format::endForm("Sign in");
-	Format::createFooter();
-}
-
-
-sub handleRegistration {
-	my $session = $q->param("session");
-	my $sessionInfo = Session::check($session);
-	Assert::assertTrue($sessionInfo, 
-		"Session expired. Please sign in first.");
 
 	# DONE: retrieve saved state only when user is properly logged in
 	# otherwise they could access a profile with email only
 	my $q_saved = new CGI();
-			
-	my $role;
-	# DONE: augmented to use password if one is supplied in order to prevent unintended
-	# registration as a new participant
-	# TODO: should really change radio button when password is entered using a script
-	# TODO: what I should really do, however, is not to rely on the user providing the correct
-	# input ("new" choice), but check whether such a user already exists in
-	# the database
-	if ($q->param("status") eq "new" && !$q->param("password")) {
-		$role = "participant";
-	} else {
-		my $author = checkAuthorPassword($q->param("email"), $q->param("password")); 
-		my $reviewer = checkReviewerPassword($q->param("email"), $q->param("password"));
-		$role = $author ? $author : $reviewer;
-		unless ($role) {
-		 	Audit::handleError("Please check that you entered the correct user name and password",
-		 		0, "$script.cgi");
-		}
-		$q->param( "name" => Register::getName($q->param("email")) );
-		Register::loadRegistration($q->param("email"), $q_saved);
-	}
-	Session::setUser($q->param("session"), $q->param("email"), $role);
-		
-	# DONE: only in test version
-	if ($debug) {
-		# Format::createFreetext("You are logged on as <b>$role</b>");
-	}
-	
-	Format::createHeader("Registration", "Registration", "js/validate.js", 1);	
-	
+				
 	Format::createFreetext("Mandatory entries are indicated with a (*).");
 	
 	Format::startForm("post", "registration_submitted", "return checkRegistrationForm(this)");
@@ -292,6 +204,11 @@ sub handleRegistration {
 	Format::createFreetext("Once you register, you will receive a confirmation email with this information.");
 
 	Format::endForm("Register");
+	
+	print <<END;
+	</div>
+END
+	
 	
 	Format::createFooter();
 }
@@ -791,27 +708,31 @@ END
 
 # Utilities
 
-sub checkAuthorPassword {
-	my ($user, $password) = @_;
-	if (Password::checkPassword(0, $user, $password)) {
-		return "author";
-	}
-	return "";
+sub checkCredentials {
+	my $session = $q->param("session");
+	Assert::assertTrue(Session::check($session), 
+		"Session expired. Please sign in first.");
+	my ($user, $role) = Session::getUserRole($q->param("session"));	
+	Assert::assertTrue($user, "You are not logged in");
+	Assert::assertTrue($role eq "author" || $role eq "shepherd" || $role eq "chair" || $role eq "pc" || $role eq "admin", 
+		"You are not allowed to access this site");
+	return $session;
 }
 
-sub checkReviewerPassword {
-	my ($user, $password) = @_;
-	return Review::authenticate($user, $password);
+sub showSharedMenu {
+	my ($session) = @_;
+	
+	print <<END;
+	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
+END
 }
 
 # Main dispatcher
 
-my $action = $q->param("action") || "sign_in";
+my $action = $q->param("action") || "register";
 Format::sanitizeInput();
 Audit::trace($action);
-if ($action eq "sign_in") {
-	handleSignIn();
-} elsif ($action eq "register") {
+if ($action eq "register") {
 	handleRegistration();
 } elsif ($action eq "registration_submitted") {
 	handleRegistrationSubmitted();
