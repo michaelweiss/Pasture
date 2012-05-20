@@ -36,6 +36,7 @@ our $CONFERENCE_WEBSITE = $config->{"conference_website"};
 our $SUBMISSION_OPEN = $config->{"submission_open"};
 our $SCREEN_OPEN = $config->{"sceeen_open"};
 our $SHEPHERD_SUBMISSION_OPEN = $config->{"shepherd_submission_open"};
+our $REGISTRATION_OPEN = $config->{"registration_closed"} == 0;
 our $baseUrl = $config->{"url"};
 
 my $script = "gate.cgi";
@@ -455,6 +456,10 @@ END
 	Format::createAction($SHEPHERD_SUBMISSION_OPEN, "$baseUrl/$script?action=shepherd&session=$session", 
 		"Become a shepherd", "we are not looking for shepherds at this time");
 	
+	# register
+	Format::createAction($REGISTRATION_OPEN, "$baseUrl/register.cgi?session=$session", 
+		"Register for the conference", "Registration is now closed");
+		
 	print <<END;
 	</ul>
 END
