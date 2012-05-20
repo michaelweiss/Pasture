@@ -48,8 +48,11 @@ sub handleRegistration {
 	my $session = checkCredentials();
 	my ($user, $role) = Session::getUserRole($session);	
 		
-	Format::createHeader("Register > Register", "", "js/validate.js");	
+	Format::createHeader("Register > Profile", "", "js/validate.js");	
 	showSharedMenu($session);
+	
+	my %profile = User::loadUser($user);
+	my %contact = Contact::loadContact($user);	
 	
 	print <<END;
 	<div id="widebox">
@@ -61,6 +64,13 @@ END
 	# otherwise they could access a profile with email only
 	my $q_saved = new CGI();
 				
+	unless ($q_saved->param("name")) {
+		$q_saved->param("name" => $profile{"firstName"} . " " . $profile{"lastName"});
+		$q_saved->param("affiliation" => $profile{"affiliation"});
+		$q_saved->param("country" => $profile{"country"});		
+		$q_saved->param("email" => $contact{"email"});
+	}
+	
 	Format::createFreetext("Mandatory entries are indicated with a (*).");
 	
 	Format::startForm("post", "registration_submitted", "return checkRegistrationForm(this)");
@@ -99,6 +109,10 @@ END
 	Format::createTextAreaWithTitle("", 
 		"Alternative billing address for invoice", "billing_address", 50, 6, $q_saved->param("billing_address"));
 
+	if (Role::hasRole($user, $CONFERENCE_ID, "author")) {
+		$q_saved->param("author" => "yes");
+	}
+	
 	Format::createRadioButtonsWithTitleOnOneLine("Registration information", 
 		"Author", "author",
 		"yes", "Yes",
