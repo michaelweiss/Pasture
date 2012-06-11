@@ -26,7 +26,7 @@ sub save {
 
 	$path =~ /(\.\w+)$/ || ::handleError("Bad file extension");
 	my $fileExtension = $1;	
-	unless ($fileExtension eq ".doc" || $fileExtension eq ".pdf" ||
+	unless ($fileExtension eq ".doc" || $fileExtension eq ".docx" || $fileExtension eq ".pdf" ||
 		$fileExtension eq ".txt") {		# 09-02-12 mw added support for .txt files
 		::handleError("Can only upload PDF, Word or text documents: " . $path);
 	}
