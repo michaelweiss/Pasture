@@ -15,7 +15,7 @@ use Core::Password;
 use Core::Access;
 use Core::Shepherd;
 use Core::Review;
-# use Core::Register;
+use Core::Register;
 use Core::Role;
 use Core::Contact;
 use Core::Debug;
