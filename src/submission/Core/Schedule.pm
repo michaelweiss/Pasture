@@ -13,6 +13,14 @@ our $config = Serialize::getConfig();
 my $WORKSHOPS_URL = $config->{"workshops_url"};
 
 =pod
+Fetch the list of scheduled papers.
+=cut
+
+sub getScheduledPapers {
+	getScheduledPapersFromFile();	
+}
+
+=pod
 Fetch the list of scheduled papers from the Google spreadsheet.
 =cut
 

@@ -3,10 +3,15 @@ package Format;
 our $TEMPLATE = "data/html/header.html";
 
 sub createHeader {
-	# DONE: ignore framecheck
 	my ($title, $body_title, $validate, $no_framecheck) = @_;
+	createHeaderWithTemplate($TEMPLATE, $title, $body_title, $validate, $no_framecheck);	
+}
+
+sub createHeaderWithTemplate {
+	# DONE: ignore framecheck
+	my ($template, $title, $body_title, $validate, $no_framecheck) = @_;
 	print $::q->header("text/html");
-	print applyTemplate($TEMPLATE, {
+	print applyTemplate($template, {
 		title => $title,
 	});	
 	if ($body_title) {
