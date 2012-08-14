@@ -303,12 +303,14 @@ END
 			<td valign="top" width="97%">
 				<a href="?token=$token&action=download&label=$label"><img width="11" height="11" src="/europlop/images/text.gif"></a>
 				<b>$title</b><br/>
+				<font size='-2' color='grey'>Last updated on $lastUpdated</font><br/>
+				<p>Update history of the paper:  <b>
 END
 
-#		showSubmissionHistory($reference);
+		showSubmissionHistory($reference);
 		
 					print <<END;
-				<font size='-2' color='grey'>Last updated on $lastUpdated</font>
+				</b></p>
 				<p>$abstract</p>
 			</td>
 		</tr>
@@ -335,10 +337,11 @@ sub showSubmissionHistory {
 	foreach (@versions) {
 		my $token = uri_escape(Access::token($_));
 		print <<END;
-				<a href="?token=$token&action=download&label=$_">$version</a>
+				<a href="?token=$token&action=download&label=$_">v$version</a>
 END
 			$version++;
 	}
+END
 }
 
 sub handleSelection {
@@ -635,13 +638,6 @@ print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
 
-print <<END;
-	<p>Oops, this feature is unavailable at this time.</p>
-END
-
-	Format::createFooter();
-	return;
-	
 	# DONE: email -> user id
 	my %profile = User::loadUser($user);
 	my $firstName = $profile{"firstName"};
@@ -728,7 +724,15 @@ END
 			print <<END;
 <tr>
 	<td valign="top"><a href="?token=$token&action=download&label=$label" target=_blank>$reference</a>$voted</td>
-	<td valign="top">$title <font size="-2" color="grey">$date</font></td>
+	<td valign="top">$title <font size="-2" color="grey">$date</font><br/>
+		<p>Update history of the paper:  <b>
+END
+
+		showSubmissionHistory($reference);
+		
+			print <<END;
+		</b></p>
+	</td>
 	<td valign="top" width="40">$trafficLights</td>
 	<td valign="top"><form method="post" target="_blank">
 		<input type="hidden" name="action" value="vote"/>
@@ -767,7 +771,15 @@ END
 			print <<END;
 <tr>
 	<td valign="top"><a href="?token=$token&action=download&label=$label" target=_blank>$reference</a>$voted</td>
-	<td valign="top">$title <font size="-2" color="grey">$date</font></td>
+	<td valign="top">$title <font size="-2" color="grey">$date</font>
+		<p>Update history of the paper:  <b>
+END
+
+		showSubmissionHistory($reference);
+		
+			print <<END;
+		</b></p>
+	</td>
 	<td valign="top" width="40">$trafficLights</td>
 	<td valign="top"><form method="post" target="_blank">
 		<input type="hidden" name="action" value="vote"/>
@@ -823,7 +835,15 @@ END
 			print <<END;
 <tr>
 	<td valign="top"><a href="?token=$token&action=download&label=$label" target=_blank>$reference</a>$voted</td>
-	<td valign="top">$title <font size="-2" color="grey">$date</font></td>
+	<td valign="top">$title <font size="-2" color="grey">$date</font>
+		<p>Update history of the paper:  <b>
+END
+
+		showSubmissionHistory($reference);
+		
+			print <<END;
+		</b></p>
+	</td>
 	<td valign="top" width="40">$trafficLights</td>
 	<td valign="top"><form method="post" target="_blank">
 		<input type="hidden" name="action" value="vote"/>

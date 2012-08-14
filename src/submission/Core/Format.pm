@@ -36,7 +36,12 @@ sub applyTemplate {
 }
 
 sub createFooter {
-	print applyTemplate("data/html/footer.html");
+	createFooterWithTemplate("data/html/footer.html");
+}
+
+sub createFooterWithTemplate {
+	my ($template) = @_;
+	print applyTemplate($template);
 }
 
 sub startForm {
