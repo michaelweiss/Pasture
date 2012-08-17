@@ -611,7 +611,7 @@ sub handleDownload {
 		if ($type eq "pdf") {
 			print $::q->header(-type => "application/pdf",
 				-attachment => $fileName);
-		} elsif ($type eq "doc") {
+		} elsif ($type eq "doc" || $type eq "docx") {
 			print $::q->header(-type => "application/msword",
 				-attachment => $fileName);
 		} elsif ($type eq "txt") {	# 09-02-12 mw can download .txt files now
