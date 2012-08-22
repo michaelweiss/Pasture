@@ -650,10 +650,8 @@ END
 	unless ($pcCanViewAll) {
 		@initialPcForPaper = Decision::getScreenAssignmentsExceptRejected($user);
 	} else {
-		# TODO: should use $config->{"program_chair_email"}, but during testing this is
-		# set to a dummy address so won't get the right result here
-		@initialPcForPaper = Decision::getScreenAssignmentsExceptRejected(
-			$config->{"program_chair_email"});
+		my %contact = Contact::lookupContactByEmail($config->{"program_chair_email"});	
+		@initialPcForPaper = Decision::getScreenAssignmentsExceptRejected($contact{"user"});
 	}
 		
 	# get all assignments for this shepherd/pc member

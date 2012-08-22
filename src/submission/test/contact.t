@@ -29,9 +29,22 @@ sub testAllContacts {
 	$#contacts == 3-1 || die "array does not have 3 elements: " . @contacts;
 }
 
+sub testLookupContactByEmail {
+	print "testLookupContactByEmail\n";
+	Contact::saveContact("bob", "bob\@email.com");
+	Contact::saveContact("alice", "alice\@email.com");
+	Contact::saveContact("sue", "sue\@email.com");
+	my %contact = Contact::lookupContactByEmail("alice\@email.com");
+	$contact{"user"} eq "alice" || die "user does not match: " . $contact{"user"};
+}
+
+
 setup();
 testCreateContact();
 testUpdateContact();
 
 setup();
 testAllContacts();
+
+setup();
+testLookupContactByEmail();
