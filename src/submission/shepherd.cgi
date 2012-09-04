@@ -719,6 +719,7 @@ END
 			my $status = "";	 # "" or "disabled"
 			my $trafficLights = Decision::trafficLights($reference);
 			my $voted = Decision::userVote($votes, $user, $reference) ? "*" : "";
+			my $reviews = reviewsForPaper($reference);
 			print <<END;
 <tr>
 	<td valign="top"><a href="?token=$token&action=download&label=$label" target=_blank>$reference</a>$voted</td>
@@ -743,6 +744,13 @@ END
 			style="position:relative" $status/>
 		</form>
 	</td>
+</tr>
+END
+
+				print <<END;
+<tr>
+	<td/>
+	<td>$reviews</td>
 </tr>
 END
 		}
