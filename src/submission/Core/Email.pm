@@ -13,6 +13,12 @@ use Core::Audit;
 our $config = Serialize::getConfig();
 our $debug = $config->{"debug"};
 
+# Create temporary mail directory if one does not exist
+unless (-e "data/mail") {
+	mkdir("data/mail", 0755) || 
+		Audit::handleError("Cannot create mail directory");
+}
+
 # Generate a temporary file name to hold email body.
 #
 # File name is generated from a timestamp and an id (anything unique, currently
