@@ -6,6 +6,12 @@ use Core::Lock;
 
 my %assignments;
 
+# Create directory for screening assignments and votes, if one does not exist
+unless (-e "data/screen") {
+	mkdir("data/screen", 0755) || 
+		Audit::handleError("Cannot create screen directory");
+}
+
 sub getAssignments {
 	unless (%assignments) {
 		loadAssignments(); 

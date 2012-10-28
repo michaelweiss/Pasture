@@ -9,7 +9,13 @@ $CGI::POST_MAX = 10 * 1024 * 1024;		# Limit uploads to 10 MB
 
 my $MAX_DIR_SIZE = 250 * 1024 * 1024;	# Maximum upload directory size. Limit total uploads to 250 MB
 my $MAX_OPEN_TRIES = 100;				# Number of times we attempt create a unique filename
-										
+	
+# Create directory for submitted papers, if one does not exist
+unless (-e "papers") {
+	mkdir("papers", 0755) || 
+		Audit::handleError("Cannot create papers directory");
+}
+									
 sub save {
 	my ($path) = @_;
 

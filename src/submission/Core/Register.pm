@@ -4,6 +4,13 @@ use Core::Review;
 
 our @fields = ("email", "name", "affiliation", "address_line_1", "address_line_2", "city", "state", "postal_code", "country", "phone", "gender", "billing_address", "author", "focus_group_leader", "room", "room_mate", "participants", "children", "vegetarian", "fee", "comments", "workshop", "focus_group_1", "focus_group_2", "name_on_card", "card_type");
 
+# Create directory for registrations, if one does not exist
+unless (-e "data/registration") {
+	mkdir("data/registration", 0755) || 
+		Audit::handleError("Cannot create registration directory");
+}
+
+
 =pod
 Authenticate by checking account in admin, pc, reviewer or shepherd role. Then check if
 the user has submitted a paper as an author.

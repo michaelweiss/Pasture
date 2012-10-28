@@ -16,6 +16,14 @@ our $baseUrl = $config->{"url"};
 my $LOCK = 2;
 my $UNLOCK = 8;
 
+# Create directory for decisions, if one does not exist
+unless (-e "data/decision") {
+	mkdir("data/decision", 0755) || 
+		Audit::handleError("Cannot create decision directory");
+}
+
+
+
 =pod
 Assumption: Each paper isreviewed by multiple PC members, including 
 the one who oversaw the shepherding process. Second reviewers for each paper

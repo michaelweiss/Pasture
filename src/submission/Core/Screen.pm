@@ -5,6 +5,12 @@ use Core::Format;
 use Core::Lock;
 use Core::Assign;
 
+# Create directory for screening assignments and votes, if one does not exist
+unless (-e "data/screen") {
+	mkdir("data/screen", 0755) || 
+		Audit::handleError("Cannot create screen directory");
+}
+
 sub saveVote {
 	my ($timestamp, $user, $reference, $vote, $reason) = @_;
 	$reason =~ s/\n/ /g;

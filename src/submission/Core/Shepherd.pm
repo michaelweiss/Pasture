@@ -4,6 +4,12 @@ use lib '.';
 use Core::Format;
 use Core::Audit;
 
+# Create directory for shepherding assignments and votes, if one does not exist
+unless (-e "data/shepherd") {
+	mkdir("data/shepherd", 0755) || 
+		Audit::handleError("Cannot create shepherd directory");
+}
+
 sub savePreference {
 	my ($timestamp, $user, $reference, $priority) = @_;
 	$reason =~ s/\n/ /g;
