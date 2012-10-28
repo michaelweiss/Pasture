@@ -458,7 +458,7 @@ END
 	
 	# register
 	Format::createAction($REGISTRATION_OPEN, "$baseUrl/register.cgi?session=$session", 
-		"Register for the conference", "Registration is now closed");
+		"Register for the conference", "Registration is now closed") if ($REGISTRATION_OPEN);
 		
 	print <<END;
 	</ul>
