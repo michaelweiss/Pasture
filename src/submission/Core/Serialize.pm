@@ -5,6 +5,13 @@ use Core::Audit;
 my $LOCK = 2;
 my $UNLOCK = 8;
 
+# Create directory for submission records, if one does not exist
+unless (-e "data/records") {
+	mkdir("data/records", 0755) || 
+		Audit::handleError("Cannot create records directory");
+}
+
+
 # TODO: consider moving to another module
 sub getReference {
 	_lock("data", "reference");
