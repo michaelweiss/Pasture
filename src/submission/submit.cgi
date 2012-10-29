@@ -39,6 +39,7 @@ our $CONFERENCE = $config->{"conference"};
 our $CONFERENCE_ID = $config->{"conference_id"};
 our $SUBMISSION_OPEN = $config->{"submission_open"};
 our $MULTI_TRACK = $config->{"multi_track"};
+our $NUMBER_OF_TRACKS = $config->{"focus_group_track"};
 our $baseUrl = $config->{"url"};
 
 my $script = "submit.cgi";
@@ -230,12 +231,16 @@ END
 	# really be validating track selection on client)
 	# TODO: make number of tracks and track rerpresenting focus groups
 	# configurable in config.dat
+
+	my @tracks;
+	for (my $i = 1; $i <= $NUMBER_OF_TRACKS; $i++) {
+		push(@tracks, $i);
+		push(@tracks, $config->{"track_" . $i});
+	}
 	Format::createRadioButtonsWithTitle("Track (*)", 
-		"Desired track", "track",
-		"1", $config->{"track_1"},
-		"2", $config->{"track_2"},
-		"3", $config->{"track_3"},
+		"Desired track", "track", @tracks,
 		$q_saved->param("track") || "1");
+		
 	Format::createTextAreaWithTitle("Abstract (*)", 
 		"Enter your abstract here", "abstract", 50, 8,
 		$q_saved->param("abstract"));
