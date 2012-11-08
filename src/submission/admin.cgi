@@ -33,6 +33,7 @@ our $WEBCHAIR_EMAIL = $config->{"web_chair_email"};
 our $CONFERENCE = $config->{"conference"};
 our $CONFERENCE_ID = $config->{"conference_id"};
 our $baseUrl = $config->{"url"};
+our $NUMBER_OF_TRACKS = $config->{"focus_group_track"};
 
 BEGIN {
 	sub handleInternalError {
@@ -112,11 +113,14 @@ END
 	print <<END;
 	<div id="widebox">
 END
+
+	my @tracks;
+	for (my $i = 1; $i <= $NUMBER_OF_TRACKS; $i++) {
+		push(@tracks, $i);
+		push(@tracks, $config->{"track_" . $i});
+	}
 	Format::createRadioButtonsWithTitle("View submissions to which track?", 
-		"Desired track, or all", "track",
-		"1", $config->{"track_1"},
-		"2", $config->{"track_2"},
-		"3", $config->{"track_3"},
+		"Desired track, or all", "track", @tracks,
 		"0", "All",
 		"0");
 		
