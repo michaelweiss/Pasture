@@ -55,19 +55,25 @@ sub hasRole {
 
 sub getRoles {
 	my ($user, $conference) = @_;
-	my @roles;
+	my %roles;
 	Lock::lock("data", "roles");
 	open(LOG, "data/roles.dat") ||
-		return @roles;
+		return ();
 	while (<LOG>) {
-		if (/^$user\t$conference\t/) {	
-			chomp;
-			my @record = split(/\t/);
-			push(@roles, $record[-1]);
+		chomp;
+		if (/^$user\t$conference\t(\w+)/) {	
+			$roles{$1} = 1;
+		}
+		if (/^$user\t$conference\t-(\w+)/) {	
+			$roles{$1} = 0;
 		}
 	}
 	close(LOG);
 	Lock::unlock("data", "roles");
+	my @roles;
+	foreach (keys %roles) {
+		push(@roles, $_) if ($roles{$_});
+	}	
 	return @roles;
 }
 
@@ -78,6 +84,7 @@ sub getUsersInRole {
 	open(LOG, "data/roles.dat") ||
 		return ();
 	while (<LOG>) {
+		chomp;
 		if (/^(.+?)\t$conference\t$role$/) {	
 			$roles{$1} = $role;
 		}

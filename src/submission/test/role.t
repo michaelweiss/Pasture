@@ -34,6 +34,17 @@ sub testGetUsersInRole {
 	$#users == 0 || die "now only alice should be in (@users)";
 }
 
+sub testGetRoles {
+	print "testGetRoles\n";
+	Role::addRole("bob", "europlop2012", "pc");	
+	Role::addRole("bob", "europlop2012", "admin");
+	my @roles = Role::getRoles("bob", "europlop2012");
+	$#roles == 1 || die "pc and admin should be in (@roles)";
+	Role::removeRole("bob", "europlop2012", "pc");
+	@roles = Role::getRoles("bob", "europlop2012");
+	$#roles == 0 || die "now only admin should be in (@roles)";
+}
+
 setup();
 testAddRole();
 
@@ -42,3 +53,6 @@ testRemoveRole();
 
 setup();
 testGetUsersInRole();
+
+setup();
+testGetRoles();
