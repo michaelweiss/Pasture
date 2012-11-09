@@ -357,6 +357,7 @@ END
 	print <<END;
 	<p>
 		<a href="$script?action=add_role&role=pc&session=$session">Add a new PC member</a><br/>
+		<a href="$script?action=remove_role&role=pc&session=$session">Remove a PC member</a><br/>
 		<a href="$script?action=assignments&session=$session">Edit screening assignments</a>
 	</p>
 END
@@ -410,7 +411,81 @@ END
 		<input type="hidden" name="role" value="$role">
 		<input type="submit" value="<<">
 		</td><td>
-	<select name="new_user" multiple="true" size="12">
+	<select name="new_user" multiple="false" size="12">
+END
+
+		my @contacts = Contact::loadAllContacts();
+		foreach my $user (@contacts) {	
+			unless (Role::hasRole($user, $CONFERENCE_ID, $role)) {
+				my $name = Review::getReviewerName($user);
+				print <<END;
+		<option name="new_user" value="$user"/> $name ($user)
+END
+			}
+		}
+	
+		print <<END;
+	</select></td>
+		</tr>	
+	</table></p>
+	</form>
+END
+	} else {
+		print <<END;
+	<p>Role not yet supported.</p>
+END
+	}
+
+	Format::createFooter();
+}
+
+sub handleRemoveRole {
+	my $session = checkCredentials();	
+		
+	Format::createHeader("Admin > Remove Role");
+
+	print <<END;
+	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
+END
+
+	my $role = $q->param("role");
+	if ($role eq "pc") {
+		if ($q->param("old_user")) {
+			my $user = $q->param("old_user");
+			if (Role::hasRole($user, $CONFERENCE_ID, "pc")) {
+				Role::removeRole($user, $CONFERENCE_ID, "pc");	
+			}
+		}
+		print <<END;
+	<form>
+	<p>To remove a PC member, select a user on the left and click ">>".</p>
+	<p><table>
+		<tr>
+			<th>PC</th>
+			<th></th>
+			<th>Users</th>
+		<tr>
+		<tr><td>
+	<select name="old_user" multiple="false" size="12">
+END
+
+		my @members = Review::getProgramCommitteeMembers();
+		foreach my $user (@members) {	
+			my $name = Review::getReviewerName($user);
+			print <<END;
+		<option name="old_user" value="$user"/> $name ($user)
+END
+		}
+
+		print <<END;
+	</select>		
+		</td><td>
+		<input type="hidden" name="session" value="$session">
+		<input type="hidden" name="action" value="remove_role">
+		<input type="hidden" name="role" value="$role">
+		<input type="submit" value=">>">
+		</td><td>
+	<select name="new_user" multiple="false" size="12">
 END
 
 		my @contacts = Contact::loadAllContacts();
@@ -774,6 +849,8 @@ if ($action eq "menu") {
 	handlePc();
 } elsif ($action eq "add_role") {
 	handleAddRole();
+} elsif ($action eq "remove_role") {
+	handleRemoveRole();
 } elsif ($action eq "assignments") {
 	handleAssignments();
 } elsif ($action eq "participants") {
