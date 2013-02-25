@@ -34,7 +34,7 @@ our $CONFERENCE = $config->{"conference"};
 our $CONFERENCE_ID = $config->{"conference_id"};
 our $CONFERENCE_WEBSITE = $config->{"conference_website"};
 our $SUBMISSION_OPEN = $config->{"submission_open"};
-our $SCREEN_OPEN = $config->{"sceeen_open"};
+our $SCREEN_OPEN = $config->{"screen_open"};
 our $SHEPHERD_SUBMISSION_OPEN = $config->{"shepherd_submission_open"};
 our $REGISTRATION_OPEN = $config->{"registration_closed"} == 0;
 our $baseUrl = $config->{"url"};

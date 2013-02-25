@@ -1,0 +1,21 @@
+#!/bin/sh
+
+HOME=/Users/mrw/tmp
+
+cd $HOME
+mkdir submission
+
+cd submission
+mkdir -m 0777 data
+mkdir images
+
+cd data
+mkdir -m 0777 decision
+mkdir html
+mkdir -m 0777 mail
+mkdir -m 0777 records
+mkdir -m 0777 registration
+mkdir -m 0777 screen
+mkdir -m 0777 shepherd
+
+
