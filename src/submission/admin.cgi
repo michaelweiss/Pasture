@@ -49,15 +49,15 @@ BEGIN {
 	}
 	CGI::Carp::set_message( \&handleInternalError );
 }
- 
+
 # Handlers
 
 sub handleMenu {
 	my $session = checkCredentials();
-	my ($user, $role) = Session::getUserRole($session);	
+	my ($user, $role) = Session::getUserRole($session);
 
 	Format::createHeader("Admin > Menu");
-	
+
 	print <<END;
 	<div id="widebox">
 	<p>Here is what you can do:</p>
@@ -73,21 +73,21 @@ sub handleMenu {
 	-->
 	</ul>
 END
-	
+
 	# TODO: put this code into a shared library
 	print <<END;
 	<ul>
 		<li>Change role to:
 END
-	
+
 	my @roles = Role::getRoles($user, $CONFERENCE_ID);
 	foreach (@roles) {
 		unless ($_ eq $role) {
-			print " <a href=\"$baseUrl/gate.cgi?action=change_role&session=$session&role=$_\">$_</a>";	
+			print " <a href=\"$baseUrl/gate.cgi?action=change_role&session=$session&role=$_\">$_</a>";
 		}
 	}
 	print "</li>\n";
-	
+
 	print <<END;
 		<li>Change conference</li>
 	</ul>
@@ -97,11 +97,11 @@ END
 	Format::createFooter();
 }
 
-sub handleViewSubmissions {	
+sub handleViewSubmissions {
 	my $session = checkCredentials();
-			
+
 	Format::createHeader("Admin > Submissions");
-	
+
 	print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
@@ -109,7 +109,7 @@ END
 	# form to view submissions to a given track
 	Format::startForm("post", "submissions");
 	Format::createHidden("session", $q->param("session"));
-	
+
 	print <<END;
 	<div id="widebox">
 END
@@ -119,12 +119,12 @@ END
 		push(@tracks, $i);
 		push(@tracks, $config->{"track_" . $i});
 	}
-	Format::createRadioButtonsWithTitle("View submissions to which track?", 
+	Format::createRadioButtonsWithTitle("View submissions to which track?",
 		"Desired track, or all", "track", @tracks,
 		"0", "All",
 		"0");
-		
-	Format::createCheckboxesWithTitleOnOneLine("Apply filters", 
+
+	Format::createCheckboxesWithTitleOnOneLine("Apply filters",
 		"Select all filters that are applicable", "filter",
 		"current", "Only current versions",
 		"csv", "Export as CSV list",
@@ -133,27 +133,27 @@ END
 		"current"
 	);
 	Format::endForm("View");
-	
+
 	print <<END;
 	</div>
 END
-	
+
 	Format::createFooter();
 }
 
 sub handleSubmissions {
 	my $session = checkCredentials();
-	
+
 	my ($track) = $q->param("track") =~ /(\d+)/;
-	
+
 	Format::createHeader("Admin > Submissions", "", "js/tablesort.js");
-	
+
 	print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
 
 	Format::createFreetext("<h2>" . $config->{"track_" . $track} . "</h2>");
-	
+
 	my %filters = map { $_ => 1 } $q->param("filter");
 
 	my @records;
@@ -162,7 +162,7 @@ END
 	} else {
 		@records = Records::listCurrent();
 	}
-	
+
 	unless ($filters{"csv"}) {
 		print <<END;
 <table border="1" cellspacing="0" width="100%" onClick="sortColumn(event)">
@@ -179,7 +179,7 @@ END
 	} else {
 #		print "<pre>\n";
 	}
-	
+
 	foreach $label (sort @records) {
 		if ($label =~ /^(\d+)_(\d+)$/) {
 			my $reference = $2;
@@ -192,7 +192,7 @@ END
 				my $authors = $record->param("authors");
 				my $title = $record->param("title");
 				my $abstract = $record->param("abstract");
-				my $referenceAndVersion = 
+				my $referenceAndVersion =
 					$record->param("file_name");
 				$referenceAndVersion =~ s/\.\w+$//;
 				unless ($referenceAndVersion) {
@@ -227,8 +227,8 @@ END
 				}
 			}
 		}
-	} 
-	
+	}
+
 	unless ($filters{"csv"}) {
 		print <<END;
 </tbody>
@@ -237,15 +237,15 @@ END
 	} else {
 #		print "</pre>\n";
 	}
-	
+
 	Format::createFooter();
 }
 
-sub handleAuthors {	
+sub handleAuthors {
 	my $session = checkCredentials();
-	
+
 	Format::createHeader("Admin > Authors");
-	
+
 	print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
@@ -254,7 +254,7 @@ END
 	@records = Records::listCurrent();
 
 	my $emails;
-	
+
 	print <<END;
 	<div id="widebox">
 		<p>
@@ -262,24 +262,24 @@ END
 END
 
 	# TODO: use submission list to compute list of authors, and move to submissions module
-	
+
 	# DONE: keep track of which authors have been listed already
 	my %authors;
-	
+
 	foreach $label (sort @records) {
 		if ($label =~ /^(\d+)_(\d+)$/) {
 			my $reference = $2;
-			unless (Shepherd::status($reference) eq "rejected" || 
+			unless (Shepherd::status($reference) eq "rejected" ||
 					Shepherd::status($reference) eq "withdrawn") {
 				my $record = getRecord($label);
 				my $contactName = $record->param("contact_name");
-				my $contactEmail = $record->param("contact_email");		
+				my $contactEmail = $record->param("contact_email");
 				unless ($authors{$contactEmail}) {
 					unless ($emails) {
 						$emails = $contactEmail;
 					} else {
 						$emails .= "," . $contactEmail;
-					}	
+					}
 					print <<END;
 	<tr>
 		<td>$contactName</td>
@@ -300,16 +300,16 @@ END
 
 	<p><a href="mailto:$emails">Send email to all authors</a></p>
 END
-	
+
 	Format::createFooter();
 }
 
 # handle request to list PC members
-sub handlePc {	
-	my $session = checkCredentials();	
-		
+sub handlePc {
+	my $session = checkCredentials();
+
 	Format::createHeader("Admin > PC");
-	
+
 	print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
@@ -328,7 +328,7 @@ END
 		my $email = Review::getReviewerEmail($user);
 		$emails{$name} = $email;
 	}
-	
+
 	# show sorted list of pc member names and emails
 	my $emails;
 	foreach my $name (sort keys %emails) {
@@ -345,7 +345,7 @@ END
 	</tr>
 END
 	}
-	
+
 	print <<END;
 			</table>
 		</p>
@@ -358,7 +358,7 @@ END
 	<p>
 		<a href="$script?action=add_role&role=pc&session=$session">Add a new PC member</a><br/>
 		<a href="$script?action=remove_role&role=pc&session=$session">Remove a PC member</a><br/>
-		<a href="$script?action=assignments&session=$session">Edit screening assignments</a>
+		<a href="$script?action=assignments&role=admin&session=$session">Edit screening assignments</a>
 	</p>
 END
 
@@ -366,8 +366,8 @@ END
 }
 
 sub handleAddRole {
-	my $session = checkCredentials();	
-		
+	my $session = checkCredentials();
+
 	Format::createHeader("Admin > Add Role");
 
 	print <<END;
@@ -379,7 +379,7 @@ END
 		if ($q->param("new_user")) {
 			my $user = $q->param("new_user");
 			unless (Role::hasRole($user, $CONFERENCE_ID, "pc")) {
-				Role::addRole($user, $CONFERENCE_ID, "pc");	
+				Role::addRole($user, $CONFERENCE_ID, "pc");
 			}
 		}
 		print <<END;
@@ -396,7 +396,7 @@ END
 END
 
 		my @members = Review::getProgramCommitteeMembers();
-		foreach my $user (@members) {	
+		foreach my $user (@members) {
 			my $name = Review::getReviewerName($user);
 			print <<END;
 		<option name="old_user" value="$user"/> $name ($user)
@@ -404,7 +404,7 @@ END
 		}
 
 		print <<END;
-	</select>		
+	</select>
 		</td><td>
 		<input type="hidden" name="session" value="$session">
 		<input type="hidden" name="action" value="add_role">
@@ -415,7 +415,7 @@ END
 END
 
 		my @contacts = Contact::loadAllContacts();
-		foreach my $user (@contacts) {	
+		foreach my $user (@contacts) {
 			unless (Role::hasRole($user, $CONFERENCE_ID, $role)) {
 				my $name = Review::getReviewerName($user);
 				print <<END;
@@ -423,10 +423,10 @@ END
 END
 			}
 		}
-	
+
 		print <<END;
 	</select></td>
-		</tr>	
+		</tr>
 	</table></p>
 	</form>
 END
@@ -440,8 +440,8 @@ END
 }
 
 sub handleRemoveRole {
-	my $session = checkCredentials();	
-		
+	my $session = checkCredentials();
+
 	Format::createHeader("Admin > Remove Role");
 
 	print <<END;
@@ -453,7 +453,7 @@ END
 		if ($q->param("old_user")) {
 			my $user = $q->param("old_user");
 			if (Role::hasRole($user, $CONFERENCE_ID, "pc")) {
-				Role::removeRole($user, $CONFERENCE_ID, "pc");	
+				Role::removeRole($user, $CONFERENCE_ID, "pc");
 			}
 		}
 		print <<END;
@@ -470,7 +470,7 @@ END
 END
 
 		my @members = Review::getProgramCommitteeMembers();
-		foreach my $user (@members) {	
+		foreach my $user (@members) {
 			my $name = Review::getReviewerName($user);
 			print <<END;
 		<option name="old_user" value="$user"/> $name ($user)
@@ -478,7 +478,7 @@ END
 		}
 
 		print <<END;
-	</select>		
+	</select>
 		</td><td>
 		<input type="hidden" name="session" value="$session">
 		<input type="hidden" name="action" value="remove_role">
@@ -489,7 +489,7 @@ END
 END
 
 		my @contacts = Contact::loadAllContacts();
-		foreach my $user (@contacts) {	
+		foreach my $user (@contacts) {
 			unless (Role::hasRole($user, $CONFERENCE_ID, $role)) {
 				my $name = Review::getReviewerName($user);
 				print <<END;
@@ -497,10 +497,10 @@ END
 END
 			}
 		}
-	
+
 		print <<END;
 	</select></td>
-		</tr>	
+		</tr>
 	</table></p>
 	</form>
 END
@@ -515,10 +515,10 @@ END
 
 # handle request to edit assignments
 sub handleAssignments {
-	my $session = checkCredentials();	
-		
+	my $session = checkCredentials();
+
 	Format::createHeader("Admin > Screening assignments");
-	
+
 	print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
@@ -527,7 +527,7 @@ END
 	if ($q->param("status") eq "updated") {
 		updateAssignments(@pcMembers);
 	}
-	showAssignmentsEditor(@pcMembers);
+	showAssignmentsEditor($session, @pcMembers);
 
 	Format::createFooter();
 }
@@ -550,7 +550,7 @@ sub updateAssignments {
 }
 
 sub showAssignmentsEditor {
-	my @pcMembers = @_;
+	my ($session, @pcMembers) = @_;
 
 	print <<END;
 	<div id="widebox">
@@ -560,8 +560,8 @@ END
 
 	foreach $reviewer (@pcMembers) {
 		showAssignmentsForOneReviewer($reviewer);
-	}	
-	
+	}
+
 	print <<END;
 	</table></p>
 	<input type="hidden" name="session" value="$session">
@@ -581,31 +581,31 @@ sub showAssignmentsForOneReviewer {
 			<td>$name</td>
 			<td width="10">
 END
-		my @assignments = Assign::getAssignmentsForReviewer($reviewer);		
+		my @assignments = Assign::getAssignmentsForReviewer($reviewer);
 		foreach my $i (0..9) {
 			my $paper = $assignments[$i];
 			print <<END;
 			<td><input name="$reviewer.$i" type="text" size="1" value="$paper"></td>
 END
 			$i++;
-		}	
+		}
 		print <<END;
 		</tr>
 END
 }
 
 # handle request to view shepherds
-sub handleShepherds {	
-	my $session = checkCredentials();	
-		
+sub handleShepherds {
+	my $session = checkCredentials();
+
 	Format::createHeader("Admin > Shepherds");
-	
+
 	print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
 
 	my $assignments = Shepherd::assignments();
-	my $emails;	
+	my $emails;
 
 	print <<END;
 	<div id="widebox">
@@ -643,14 +643,14 @@ END
 	Format::createFooter();
 }
 
-sub handleParticipants {	
+sub handleParticipants {
 	my $session = checkCredentials();
-	
+
 	Format::createHeader("Admin > Participants");
-	
+
 	Format::startForm("post", "menu");
 	Format::createHidden("session", $q->param("session"));
-	
+
 		unless ($q->param("format") eq "csv") {
 	my %participants;
 	%participants = Register::getAllRegistrations();
@@ -665,7 +665,7 @@ sub handleParticipants {
 			$emails = $email;
 		} else {
 			$emails .= "," . $email;
-		}	
+		}
 		print <<END;
 	<tr>
 		<td width="150">$name</td>
@@ -679,21 +679,21 @@ sub handleParticipants {
 END
 	}
 	print "</table>\n";
-	
+
 	print <<END;
 	<p><a href="mailto:$emails">Send email to all participants</a></p>
 END
 		} else {
 	# provide link to csv list of participants
 	my @participants = Register::getAllRegistrationsAsCsvList();
-	
+
 	foreach $participant (@participants) {
 		print <<END;
 	$participant<br/>
 END
 	}
 		}
-	
+
 	Format::endForm("Menu");
 
 	Format::createFooter();
@@ -737,7 +737,7 @@ sub handleDownload {
 
 sub handleLog {
 	my $session = checkCredentials();
-	
+
 	Format::createHeader("Log", "", "js/tablesort.js");
 
 	Format::startForm("post", "menu");
@@ -763,7 +763,7 @@ END
 		my $time = localtime($2);
 		my $action = $3;
 		my ($dayOfWeek, $month, $day, $h, $m, $s, $year) =
-			$time =~ /(\w+) (\w+) (\d+) (\d+):(\d+):(\d+) (\d+)/;		
+			$time =~ /(\w+) (\w+) (\d+) (\d+):(\d+):(\d+) (\d+)/;
 #		print <<END;
 #	<tr>
 #		<td valign="top">$host</td>
@@ -804,9 +804,9 @@ END
 
 sub checkCredentials {
 	my $session = $q->param("session");
-	Assert::assertTrue(Session::check($session), 
+	Assert::assertTrue(Session::check($session),
 		"Session expired. Please sign in first.");
-	my ($user, $role) = Session::getUserRole($q->param("session"));	
+	my ($user, $role) = Session::getUserRole($q->param("session"));
 	Assert::assertTrue($user, "You are not logged in");
 	Assert::assertTrue($role eq "admin",
 		"You must be an admin user to access this site");
