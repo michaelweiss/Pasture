@@ -650,9 +650,15 @@ END
 	unless ($pcCanViewAll) {
 		@initialPcForPaper = Decision::getScreenAssignmentsExceptRejected($user);
 	} else {
-		my %contact = Contact::lookupContactByEmail($config->{"program_chair_email"});	
-		@initialPcForPaper = Decision::getScreenAssignmentsExceptRejected($contact{"user"});
+		my $chair = $config->{"program_chair_user"};	
+		@initialPcForPaper = Decision::getScreenAssignmentsExceptRejected($chair);
 	}
+	
+#	@initialPcForPaper = Screen::getAssignments($user);	
+	my $debugIntialPcForPaper = join(", ", @initialPcForPaper);
+print <<END;
+	<!-- assignments for $user: ($debugIntialPcForPaper) -->
+END
 		
 	# get all assignments for this shepherd/pc member
 	my $assignments = Shepherd::assignments();
