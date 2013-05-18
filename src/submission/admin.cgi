@@ -67,10 +67,8 @@ sub handleMenu {
 		<li><a href="$script?action=authors&session=$session">View authors</a></li>
 		<li><a href="$script?action=pc&session=$session">View PC members</a></li>
 		<li><a href="$script?action=shepherds&session=$session">View shepherds</a></li>
-	<!--
 		<li><a href="admin.cgi?action=participants&session=$session">View participants</a></li>
 		<li><a href="admin.cgi?action=participants&session=$session&format=csv">View participants as CSV list</a></li>
-	-->
 	</ul>
 END
 

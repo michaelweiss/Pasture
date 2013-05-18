@@ -207,7 +207,7 @@ END
 	# DONE: credit card information
 	Format::createTextWithTitle("Credit card information", 
 		"<p><em>For security reasons, print out a copy of the next page, write in your credit card number including the verification code, and then fax it to Kloster Irsee. The FAX number can be found on the registration confirmation. Your registration will not be complete unless the FAX is received. Please ensure that the credit card is valid and that it covers the total payment. Do not enter your credit card number here.</em></p>" .
-		"<p><em>If you prefer comfort to privacy, please scan your signed registration and send it to hotel\@kloster-irsee.de with the subject 'Registration for EuroPLoP 2012'.</em></p>" .
+		"<p><em>If you prefer comfort to privacy, please scan your signed registration and send it to hotel\@kloster-irsee.de with the subject 'Registration for $CONFERENCE'.</em></p>" .
 		"Name on credit card * &nbsp; (please <b>don't</b> enter your card number)", "name_on_card", 60, $q_saved->param("name_on_card"));
 	Format::createRadioButtonsWithTitleOnOneLine("", 
 		"Card type *", "card_type",
@@ -216,6 +216,10 @@ END
 		"American Express", "American Express",
 		$q_saved->param("card_type"));
 
+	Format::createCheckboxWithTitle("Terms & conditions", 
+		"Please review the terms & conditions (download here) and check off below that you accept them, before you submit your registration", "terms",
+		"accepted", "I accept the terms & conditions");
+	
 	Format::createFreetext("Once you register, you will receive a confirmation email with this information.");
 
 	Format::endForm("Register");
@@ -252,7 +256,8 @@ sub handleRegistrationSubmitted {
 	}
 	Assert::assertNotEmpty("name_on_card", "Oops. We need the name on your credit card");
 	Assert::assertNotEmpty("card_type", "Oops. Please choose the type of your card");
-		
+	Assert::assertNotEmpty("terms", "Oops. You need to accept the terms & conditions");
+
 	my $fee = $q->param("fee");
 	
 	my $fullName = $q->param("name");
@@ -276,6 +281,8 @@ sub handleRegistrationSubmitted {
 	
 	my $nameOnCard = $q->param("name_on_card");
 	my $cardType = $q->param("card_type");
+	
+	my $terms = $q->param("terms");
 	
 	
 	Format::createHeaderNoStyle("Registration Confirmation and Fax Form", 
@@ -396,7 +403,7 @@ if (window.print) {
 	+ '<input type=button name=print value="Print" '
 	+ 'onClick="javascript:window.print()">'
 //	+ '<input type=button name=email value="Email" '
-//	+ 'onClick="javascript:window.location.href=\\'mailto:hotel-irsee.de\\'&subject=\\'Registration for EuroPLoP 2012\\'">' 
+//	+ 'onClick="javascript:window.location.href=\\'mailto:hotel-irsee.de\\'&subject=\\'Registration for $CONFERENCE\\'">' 
     + '</form></center>');
 }
 </script>
@@ -471,7 +478,7 @@ We have created a new account for you. The user name is your mail address and th
 
 Best regards,
 Till Schümmer
-Programme Chair of EuroPLoP 2008
+Programme Chair of $CONFERENCE
 END
 	close (MAIL);
 	
@@ -576,7 +583,7 @@ END
 
 You can log in and update your information any time, if you need to make any corrections.
 
-Don't forget to fax in your payment information. If you prefer comfort to privacy, please scan your signed registration and send it to hotel\@kloster-irsee.de with the subject 'Registration for EuroPLoP 2012'.
+Don't forget to fax in your payment information. If you prefer comfort to privacy, please scan your signed registration and send it to hotel\@kloster-irsee.de with the subject 'Registration for $CONFERENCE'.
 
 Thanks,
 $CONFERENCE_CHAIR

@@ -491,10 +491,8 @@ sub adminMenu {
 		<li><a href="admin.cgi?action=pc&session=$session">View PC members</a></li>
 		<li><a href="bids.cgi?session=$session">Assign shepherds (bids)</a></li>
 		<li><a href="admin.cgi?action=shepherds&session=$session">View shepherds</a></li>
-	<!--
 		<li><a href="admin.cgi?action=participants&session=$session">View participants</a></li>
 		<li><a href="admin.cgi?action=participants&session=$session&format=csv">View participants as CSV list</a></li>
-	-->
 	</ul>
 END
 }

@@ -2,7 +2,7 @@ package Register;
 
 use Core::Review;
 
-our @fields = ("email", "name", "affiliation", "address_line_1", "address_line_2", "city", "state", "postal_code", "country", "phone", "gender", "billing_address", "author", "focus_group_leader", "room", "room_mate", "participants", "children", "vegetarian", "fee", "comments", "workshop", "focus_group_1", "focus_group_2", "name_on_card", "card_type");
+our @fields = ("email", "name", "affiliation", "address_line_1", "address_line_2", "city", "state", "postal_code", "country", "phone", "gender", "billing_address", "author", "focus_group_leader", "room", "room_mate", "participants", "children", "vegetarian", "fee", "comments", "workshop", "focus_group_1", "focus_group_2", "name_on_card", "card_type", "terms");
 
 # Create directory for registrations, if one does not exist
 unless (-e "data/registration") {
