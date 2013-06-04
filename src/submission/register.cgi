@@ -217,7 +217,7 @@ END
 		$q_saved->param("card_type"));
 
 	Format::createCheckboxWithTitle("Terms & conditions", 
-		"Please review the terms & conditions (download here) and check off below that you accept them, before you submit your registration", "terms",
+		"Please review the <a href='terms/terms.html'>terms & conditions</a> (download <a href='terms/terms.pdf'>here</a>) and check off below that you accept them, before you submit your registration", "terms",
 		"accepted", "I accept the terms & conditions");
 	
 	Format::createFreetext("Once you register, you will receive a confirmation email with this information.");
@@ -284,7 +284,6 @@ sub handleRegistrationSubmitted {
 	
 	my $terms = $q->param("terms");
 	
-	
 	Format::createHeaderNoStyle("Registration Confirmation and Fax Form", 
 		" ", "js/validate.js", 1);
 	
@@ -303,16 +302,18 @@ sub handleRegistrationSubmitted {
   <center>
   <table cellSpacing="10" cellPadding="10" width="600" border="10" style="border-collapse: collapse" bordercolor="#111111" height="764">
     <tr>
-      <td height="265">To: Kloster Irsee <br>
+      <td height="200">To: Kloster Irsee <br>
       Schwäbisches Tagungs- und Bildungszentrum <br>
       Klosterring 4 <br>
       87660 Irsee <br>
           Fax: +49 / 8341 / 742-78
           <h1><font size="+2">$CONFERENCE<br>
             Registration and Credit-Card Payment</font></h1>
-      <p>Be sure to enter your Credit Card Number before faxing.
-          <p>Please accept my payment of <b>$fee Euro</b> per person as registration fee
-            for $CONFERENCE (reductions may apply to accompanying participants and children).<br>
+      <!--
+      	  <p>Be sure to enter your Credit Card Number before faxing.</p>
+      -->
+          Please accept my payment of <b>$fee Euro</b> per person as registration fee
+            for $CONFERENCE (reductions may apply to accompanying participants and children).
  </td>
     </tr>
     <tr>
@@ -379,8 +380,14 @@ sub handleRegistrationSubmitted {
     <td align=left colspan="5" width="420">&nbsp;</td>
 </tr>
 </table>
-<p>&nbsp;</p>
+<br>
 <table cellSpacing="0" cols="2" cellPadding="0" width="500" border="0">
+  <tr>
+    <td colspan="2">I accept the terms and conditions provided during the registration process.</td>
+  </tr>
+  <tr>
+    <td colspan="2" height="50">
+  </tr>
   <tr>
     <td><b>Date:</b></td>
     <td><b>Signature:</b></td>
