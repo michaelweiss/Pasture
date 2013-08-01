@@ -60,6 +60,9 @@ sub saveAssignments {
 
 sub assignPaper {
 	my ($reviewer, $paper) = @_;
+	foreach $p (@{$assignments{$reviewer}}) {
+		return if ($p == $paper);
+	}
 	push(@{$assignments{$reviewer}}, $paper);
 }
 

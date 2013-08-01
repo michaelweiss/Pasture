@@ -44,8 +44,27 @@ sub testGetAssignmentsForReviewer {
 	$joes[0] eq "2" || die "expected 2, but got: $joes[0]";
 }
 
+sub testDuplicateAssignments {
+	print "testDuplicateAssignments\n";
+	Role::addRole("bob", "europlop2012", "pc");
+	Submission::recordSubmission(1, "mark");
+	Submission::recordSubmission(2, "nancy");
+	Submission::recordSubmission(3, "peter");
+	Assign::loadAssignments();
+	Assign::assignPaper("bob", 1);
+	Assign::assignPaper("bob", 2);
+	Assign::assignPaper("bob", 1);
+	Assign::saveAssignments();
+	my @bobs = Assign::getAssignmentsForReviewer("bob");
+	my $numberOfAssignments = @bobs;
+	print "Bob has ", $numberOfAssignments, " assignments\n";
+}
+
 setup();
 testAssignPapers();
 
 testLoadAssignments();
 testGetAssignmentsForReviewer();
+
+setup();
+testDuplicateAssignments();
