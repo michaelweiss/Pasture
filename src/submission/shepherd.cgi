@@ -67,11 +67,11 @@ BEGIN {
 # show submissions (except ones that were rejected during screening)
 sub handleSubmissions {
 	my $session = checkCredentials();
-	my ($user, $role) = Session::getUserRole($session);	
-		
-	Format::createHeader("Shepherd > Bids", "", "js/validate.js");	
+	my ($user, $role) = Session::getUserRole($session);
+
+	Format::createHeader("Shepherd > Bids", "", "js/validate.js");
 	showSharedMenu($session);
-	
+
 	print <<END;
 	<div id="widebox">
 END
@@ -85,7 +85,7 @@ END
 	</ul>
 END
 	Format::createFreetext("<em>Note: By clicking on the number left to the paper description, you can download the paper.</em>");
-	
+
 	# DONE: don't show the votes, but color-code paper in bids.cgi with pre-shepherding vote
 	print <<END;
 	<h4>Legend</h4>
@@ -94,7 +94,7 @@ END
 		<table>
 			<tr><td width="20" align="left">1</td><td>I would like to shepherd this paper</td></tr>
 			<tr><td align="left">2</td><td>I could be convinced to shepherd this paper</td></tr>
-			<tr><td align="left">3</td><td>I am willing to shepherd this paper, but only if nobody else does</td></tr> 
+			<tr><td align="left">3</td><td>I am willing to shepherd this paper, but only if nobody else does</td></tr>
 		</table>
 	</p>
 	</div>
@@ -104,12 +104,12 @@ END
 	Format::createHidden("session", $q->param("session"));
 
 	my $preferences = Shepherd::preferencesByUser();
-	
+
 	my $currentTrack = -1;
 	my %records = Records::getAllRecords(Records::listCurrent());
 	foreach $label (
 		sort { $records{$a}->param("track") <=> $records{$b}->param("track") }
-			sort { $records{$a}->param("reference") <=> $records{$b}->param("reference") } 
+			sort { $records{$a}->param("reference") <=> $records{$b}->param("reference") }
 				keys %records) {
 		my $record = $records{$label};
 		my $reference = $record->param("reference");
@@ -122,22 +122,22 @@ END
 
 			my $contact_name = $record->param("contact_name");
 			my $email = $record->param("contact_email");
-			
+
 			my $title = $record->param("title");
 			my $abstract = $record->param("abstract");
 			my $fileName = $record->param("file_name");
 			$fileName =~ s/\.\w+$//;
 			my $comments = $record->param("comments");
-			
+
 			my $track = $record->param("track");
 			if ($currentTrack != $track) {
 				Format::createFreetext("<h3>" . $config->{"track_" . $track} . "</h3>");
 				$currentTrack = $track;
 			}
-			
+
 			my $token = uri_escape(Access::token($label));
 			my $tags = Review::getTags($record);
-						
+
 			print <<END;
 <table border="0" cellpadding="2" cellspacing="10" width="100%">
 	<tbody>
@@ -157,9 +157,9 @@ END
 			} else {
 				print "NA ";
 			}
-			
+
 			showSavedBid($preferences, $user, $reference);
-			
+
 			# DONE: otherwise list PC member and shepherd
 			# DONE: should remove author emails
 			print <<END;
@@ -186,14 +186,14 @@ END
 		<tr>
 			<td valign="top"></td>
 			<td valign="top"></td>
-			<td valign="top"> 
+			<td valign="top">
 				Shepherd: <a href="mailto:$shepherd_email">$shepherd_name</a>
 				(PC: <a href="mailto:$pc_email">$pc_name</a>)
 			</td>
 		</tr>
 END
 			}
-			
+
 			print <<END;
 		<tr>
 			<td valign="top"></td>
@@ -209,20 +209,20 @@ END
 </table>
 END
 		}
-	} 
-		
+	}
+
 	Format::endForm("Submit");
-		
+
 	Format::createFooter();
 }
 
 # show submissions currently shepherded
 sub handleShepherdedPapers {
 	my $session = checkCredentials();
-	my ($user, $role) = Session::getUserRole($session);	
+	my ($user, $role) = Session::getUserRole($session);
 
 	Format::createHeader("Shepherd > Shepherded Papers", "", "");
-	
+
 print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
@@ -234,13 +234,13 @@ END
 		Format::createFreetext("The following papers have been assigned to you.");
 	}
 	Format::createFreetext("<em>Note: Click on the email icon next to the author name(s) to send an email to everyone involved with a paper</em><br/><em>Click on the document icon next to the title to download the most recent version of a paper</em>");
-	
+
 	# TODO: make configurable
 	# Format::createFreetext("The shepherding phase is now closed. Please see the workshop assignments for the list of accepted papers.");
-	
+
 	my $currentTrack = -1;
 	my %records = Records::getAllRecords(Records::listCurrent());
-	foreach $label (sort { $records{$a}->param("track") . "_" . $records{$a}->param("reference") cmp 
+	foreach $label (sort { $records{$a}->param("track") . "_" . $records{$a}->param("reference") cmp
 		$records{$b}->param("track") . "_" . $records{$b}->param("reference") } keys %records) {
 		my $record = $records{$label};
 		my $reference = $record->param("reference");
@@ -253,30 +253,30 @@ END
 				my $pc = $assignment{"pc"};
 				my $shepherd = $assignment{"shepherd"};
 				# either all, or only for a specific user
-				if (!$user || 
+				if (!$user ||
 					$q->param("role") eq "pc" && $pc eq $user ||
 					$q->param("role") eq "shepherd" && $shepherd eq $user) {
 					my $pc_name = Review::getReviewerName($pc);
 					my $shepherd_name = Review::getReviewerName($shepherd);
 					my $pc_email = Review::getReviewerEmail($pc);
 					my $shepherd_email = Review::getReviewerEmail($shepherd);
-					
+
 					my $authors = Review::getAuthors($record);
 					$authors =~ s|\r\n|, |g;
-		
+
 					my $contact_name = $record->param("contact_name");
 					my $email = $record->param("contact_email");
-					
+
 					my $title = $record->param("title");
 					my $abstract = $record->param("abstract");
 					my $fileName = $record->param("file_name");
 					$fileName =~ s/\.\w+$//;
-					
+
 					my $token = uri_escape(Access::token($label));
-					
+
 					# TODO: check why it generates Dec 31
 					my $lastUpdated = lastUpdated($reference);
-			
+
 					my $track = $record->param("track");
 					if ($currentTrack != $track) {
 						print <<END;
@@ -284,7 +284,7 @@ END
 END
 						$currentTrack = $track;
 					}	# if
-			
+
 					print <<END;
 	<table border="0" cellpadding="2" cellspacing="10" width="100%">
 		<tbody>
@@ -308,7 +308,7 @@ END
 END
 
 		showSubmissionHistory($reference);
-		
+
 					print <<END;
 				</b></p>
 				<p>$abstract</p>
@@ -321,12 +321,12 @@ END
 			}	# if
         } 	# unless
 	}	# foreach
-	
+
 	print <<END;
-	
+
 	<p>This list will be updated once we have made a final acceptance decision.</p>
 END
-	
+
 	Format::createFooter();
 }
 
@@ -346,7 +346,7 @@ END
 
 sub handleSelection {
 	my $session = checkCredentials();
-	my ($user, $role) = Session::getUserRole($session);	
+	my ($user, $role) = Session::getUserRole($session);
 
 	# DONE: check that at least one selection has been made
 	my @papers;
@@ -365,15 +365,15 @@ sub handleSelection {
 	unless (scalar @papers > 0) {
 		Audit::handleError("Please select at least one submission");
 	}
-		
+
 	Format::createHeader("Shepherd > Bid confirmation", "", "js/validate.js");
-	
+
 print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
 
 	my %profile = User::loadUser($user);
-	
+
 	print <<END;
 <p>Dear $profile{"firstName"},</p>
 <p>Thanks for volunteering as a shepherd for the following papers:</p>
@@ -393,26 +393,26 @@ END
 			<tr><td width="20" align="left">$priority</td><td>$title</td></tr>
 END
 	}
-		  
+
 	unless (Role::hasRole($user, $CONFERENCE_ID, "shepherd")) {
 		Role::addRole($user, $CONFERENCE_ID, "shepherd");
 	}
 
-	print <<END;		
+	print <<END;
 		</table>
 	</p>
-	
+
 	<p><b>Legend:</b></p>
 	<p>
 			<table>
 			<tr><td width="20" align="left">1</td><td>I would like to shepherd this paper</td></tr>
 			<tr><td align="left">2</td><td>I could be convinced to shepherd this paper</td></tr>
-			<tr><td align="left">3</td><td>I am willing to shepherd this paper, but only if nobody else does</td></tr> 
+			<tr><td align="left">3</td><td>I am willing to shepherd this paper, but only if nobody else does</td></tr>
 		</table>
 	</p>
-	
+
 	<p>Your bid has been sent to the $CONFERENCE $PROGRAM_CHAIR_TITLE who will confirm them as soon as possible.<p>
-	<p>Please keep in mind that there may be more then one volunteer for a specific paper. This is the reason why we cannot 
+	<p>Please keep in mind that there may be more then one volunteer for a specific paper. This is the reason why we cannot
 	start shepherding immediately.</p>
 END
 
@@ -423,13 +423,13 @@ END
 	$CONFERENCE $PROGRAM_CHAIR_TITLE</p>
 END
 	Format::createFreetext("You should receive a confirmation email in a few minutes.");
-	
+
 	print <<END;
 END
-	
+
 	sendConfirmationOfSherpherdingBid(Review::getReviewerEmail($user), $profile{"firstName"}, $papers);
 	notifyShepherdingBid(Review::getReviewerName($user), Review::getReviewerEmail($user), $papers);
-		
+
 	Format::createFooter();
 }
 
@@ -438,38 +438,38 @@ sub handleAccept {
 	my $token = Access::token($q->param("user") . "_" . $q->param("label"));
 	unless ($token eq $q->param("token")) {
 		Audit::handleError("You are not allowed to perform this action");
-	} 
-					
+	}
+
 	# TODO: email -> user id
 	# can get user name from the session
 	my $user = $q->param("user");
 	my $name = Review::getReviewerName($user);
-	
+
 	my ($reference) = $q->param("label") =~ /_(\d+)$/;
 
 	Format::createHeader("Shepherd > Accept", "", "js/validate.js");
-	
+
 	my $record = Records::getRecord($q->param("label"));
 	my $authors = Review::getAuthors($record);
 	my $title = $record->param("title");
 
 	my %assignment = Shepherd::assignedTo($reference);
 	if ($assignment{"shepherd"}) {
-		
+
 		my $name = Review::getReviewerName($assignment{"shepherd"});
 		print <<END;
 <p>Paper $reference has already been assigned to $name:</p>
 <dd><p>$authors, <b>$title</b></p></dd>
 END
-		
+
 	} else {
-		
+
 		Format::startForm("post", "accept_confirmed", "");
 		Format::createHidden("session", Session::create(Session::uniqueId(), $timestamp));
 		Format::createHidden("user", $q->param("user"));
 		Format::createHidden("label", $q->param("label"));
 		Format::createHidden("token", $q->param("token"));
-			
+
 		print <<END;
 <p>Confirm that you want to accept the bid from $name for paper $reference:</p>
 <p>$authors, <b>$title</b></p>
@@ -477,10 +477,10 @@ END
 
 		# DONE: select PC member
 		print("Select PC member: ");
-		showReviewersOfPaper($reference);		
-		
+		showReviewersOfPaper($reference);
+
 		Format::endForm("Confirm");
-		
+
 		showBids($reference);
 	}
 	Format::createFooter();
@@ -490,45 +490,45 @@ sub handleReject {
 	my $token = Access::token($q->param("email") . "_" . $q->param("label"));
 	unless ($token eq $q->param("token")) {
 		Audit::handleError("You are not allowed to perform this action");
-	} 
+	}
 
 	# TODO: email -> user id
 	my $email = $q->param("email");
 	my $name = Review::getReviewerName($email);
 
 	my ($reference) = $q->param("label") =~ /_(\d+)$/;
-	
+
 	Format::createHeader("Reject", "", "js/validate.js");
 	showSharedMenu($session);
-	
+
 	my $record = Records::getRecord($q->param("label"));
 	my $authors = Review::getAuthors($record);
 	my $title = $record->param("title");
 
 	my %assignment = Shepherd::assignedTo($reference);
 	unless ($assignment{"shepherd"}) {
-		
+
 		my $name = Review::getReviewerName($assignment{"shepherd"});
 		print <<END;
 <p>Paper $reference has not been assigned to anyone yet:</p>
-<dd><p>$authors, <b>$title</b></p></dd> 
+<dd><p>$authors, <b>$title</b></p></dd>
 END
 		# Session::invalidate($session);
-		
+
 	} else {
-		
+
 		Format::startForm("post", "reject_confirmed", "");
 		Format::createHidden("session", Session::create(Session::uniqueId(), $timestamp));
 		Format::createHidden("email", $q->param("email"));
 		Format::createHidden("label", $q->param("label"));
 		Format::createHidden("token", $q->param("token"));
-			
+
 		print <<END;
 <p>Confirm that you want to reject the bid from $name for paper $reference:</p>
 <dd><p>$authors, <b>$title</b></p></dd>
 END
 		Format::endForm("Confirm");
-		
+
 		showBids($reference);
 	}
 	Format::createFooter();
@@ -538,24 +538,24 @@ END
 sub handleAcceptConfirmed {
 	my $session = $q->param("session");
 	my $sessionInfo = Session::check($session);
-	Assert::assertTrue($sessionInfo, 
+	Assert::assertTrue($sessionInfo,
 		"Session expired. Please sign in first.");
-	
+
 	Session::invalidate($session);
-	
+
 	Format::createHeader("Shepherd > Accept confirmed", "", "js/validate.js");
-	
+
 	# DONE: email -> user id
 	my $user = $q->param("user");
-	
+
 	my $label = $q->param("label");
 	my ($reference) = $q->param("label") =~ /_(\d+)$/;
-	
+
 	my $pc = $q->param("pc");
 
 	# DONE: update status of paper
 	Shepherd::changeStatus($timestamp, $reference, "assigned");
-	
+
 	# DONE: record review assignment (PC and shepherd)
 	Shepherd::assign($timestamp, $reference, $user, $pc);
 
@@ -563,7 +563,7 @@ sub handleAcceptConfirmed {
 
 	confirmBid($user, $label, $pc);
 	introduceSheepToShepherd($user, $label, $pc, $pc_name);
-	
+
 	Format::createFooter();
 }
 
@@ -571,13 +571,13 @@ sub handleAcceptConfirmed {
 sub handleRejectConfirmed {
 	my $session = $q->param("session");
 	my $sessionInfo = Session::check($session);
-	Assert::assertTrue($sessionInfo, 
+	Assert::assertTrue($sessionInfo,
 		"Session expired. Please sign in first.");
-	
+
 	Session::invalidate($session);
 
 	Format::createHeader("Reject confirmed", "", "js/validate.js");
-	
+
 	# TODO: email -> user id
 	my $email = $q->param("email");
 	my $name = Review::getReviewerName($email);
@@ -586,7 +586,7 @@ sub handleRejectConfirmed {
 	Format::createFreetext("An email has been sent to the shepherd.");
 
 	rejectBid($email, $name, $label);
-	
+
 	Format::createFooter();
 }
 
@@ -595,7 +595,7 @@ sub handleDownload {
 	# DONE: check that this is a valid session id
 	# DONE: use token-based authentication instead (not user-based)
 	# TODO: implement session timeout
-#	Assert::assertTrue(Session::check($q->param("session")), 
+#	Assert::assertTrue(Session::check($q->param("session")),
 #		"Session expired. Please sign infirst.");
 
 	my ($label) = $q->param("label") =~ /^(\d+_\d+)$/;
@@ -630,10 +630,10 @@ sub handleDownload {
 
 sub handleAssignments {
 	my $session = checkCredentials();
-	my ($user, $role) = Session::getUserRole($session);	
-	
+	my ($user, $role) = Session::getUserRole($session);
+
 	Format::createHeader("Review of updated submissions", "", "js/validate.js");
-	
+
 print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
@@ -641,35 +641,35 @@ END
 	# DONE: email -> user id
 	my %profile = User::loadUser($user);
 	my $firstName = $profile{"firstName"};
-	
+
 	# get all record metadata
 	my %records = Records::getAllRecords(%labels);
-	
+
 	# initial PC assignments
 	my @initialPcForPaper;
 	unless ($pcCanViewAll) {
 		@initialPcForPaper = Decision::getScreenAssignmentsExceptRejected($user);
 	} else {
-		my $chair = $config->{"program_chair_user"};	
+		my $chair = $config->{"program_chair_user"};
 		@initialPcForPaper = Decision::getScreenAssignmentsExceptRejected($chair);
 	}
-	
-#	@initialPcForPaper = Screen::getAssignments($user);	
+
+#	@initialPcForPaper = Screen::getAssignments($user);
 	my $debugIntialPcForPaper = join(", ", @initialPcForPaper);
 print <<END;
 	<!-- assignments for $user: ($debugIntialPcForPaper) -->
 END
-		
+
 	# get all assignments for this shepherd/pc member
 	my $assignments = Shepherd::assignments();
 	my @shepherdForPaper = ();
 	my @pcForPaper = ();
 	foreach $reference (sort { $a <=> $b } keys %$assignments) {
 		my $shepherd = $assignments->{$reference}->{"shepherd"};
-		
+
 		# TODO: distinguish supervising pc from other pc (initial or all)
 		my $pc = $assignments->{$reference}->{"pc"};
-		
+
 		# DONE: if $pcCanViewAll is enabled, pc members still see the papers they
 		# shepherd or supervise as PCs in the sections below
 		if ($shepherd eq $user) {
@@ -680,22 +680,22 @@ END
 			@initialPcForPaper = copyWithoutElements($reference, @initialPcForPaper);
 		}
 	}
-	
+
 	# all votes
 	my $votes = Decision::votes();
-	
+
 	print <<END;
 <table border=0 cellspacing=10 width=100%>
   <tr><td colspan=2><p>$firstName, this page allows you to enter your review decisions.</p>
     <ul>
-    <li>To access the most recent versions of your shepherding and PC assignments, please select the paper numbers on the left. The last upload time is shown after the title.</li> 
+    <li>To access the most recent versions of your shepherding and PC assignments, please select the paper numbers on the left. The last upload time is shown after the title.</li>
     <li>To enter your votes click on the "vote" buttons on right.</li>
     </ul>
   </td></tr>
 END
 	if ($pcCanViewAll) {
 		print <<END;
-  <tr><td colspan=2><b>Special instructions</b></td></tr> 
+  <tr><td colspan=2><b>Special instructions</b></td></tr>
   <tr><td colspan=2><p>At this phase of the review, you can see all submissions and comment on them. Please look at the problematic papers, and at papers that do not have any reviews yet.</p>
 	<p>We want to complete the reviews by $config->{"shepherding_decisions_date"}.</p>
   </td></tr>
@@ -734,7 +734,7 @@ END
 END
 
 		showSubmissionHistory($reference);
-		
+
 			print <<END;
 		</b></p>
 	</td>
@@ -746,7 +746,7 @@ END
 		<input type="hidden" name="authors" value="$authors"/>
 		<input type="hidden" name="title" value="$title"/>
 		<input type="hidden" name="review_role" value="Shepherd"/>
-		<input type="submit" value="Vote" 
+		<input type="submit" value="Vote"
 			style="position:relative" $status/>
 		</form>
 	</td>
@@ -761,7 +761,7 @@ END
 END
 		}
 	}
-		
+
 	if (scalar @pcForPaper > 0) {
 		print <<END;
 <tr><td height="10"></td></tr>
@@ -777,7 +777,7 @@ END
 			my $status = "";	 # "" or "disabled"
 			my $trafficLights = Decision::trafficLights($reference);
 			my $voted = Decision::userVote($votes, $user, $reference) ? "*" : "";
-#			my $reviews = ($role eq "admin" || $role eq "pc" && $pcCanViewAll) ? 
+#			my $reviews = ($role eq "admin" || $role eq "pc" && $pcCanViewAll) ?
 #				reviewsForPaper($reference) : "";
 			my $reviews = reviewsForPaper($reference);
 			print <<END;
@@ -788,7 +788,7 @@ END
 END
 
 		showSubmissionHistory($reference);
-		
+
 			print <<END;
 		</b></p>
 	</td>
@@ -800,7 +800,7 @@ END
 		<input type="hidden" name="authors" value="$authors"/>
 		<input type="hidden" name="review_role" value="PC"/>
 		<input type="hidden" name="title" value="$title"/>
-		<input type="submit" value="Vote" 
+		<input type="submit" value="Vote"
 			style="position:relative" $status/>
 		</form>
 	</td>
@@ -817,12 +817,12 @@ END
 #			}
 		}
 	}
-	
+
 	# TODO: same for chairs
 	# TODO: same for initial PC members (but remove the papers that were rejected)
 	# These can be combined, since the screening assignment lists all papers assigned
 	# to a reviewer, including if the reviewer is a chair
-	
+
 	if (scalar @initialPcForPaper > 0) {
 		print <<END;
 <tr><td height="10"></td></tr>
@@ -841,7 +841,7 @@ END
 			my $status = "";	 # "" or "disabled"
 			my $trafficLights = Decision::trafficLights($reference);
 			my $voted = Decision::userVote($votes, $user, $reference) ? "*" : "";
-#			my $reviews = ($role eq "admin" || $role eq "pc" && $pcCanViewAll) ? 
+#			my $reviews = ($role eq "admin" || $role eq "pc" && $pcCanViewAll) ?
 #				reviewsForPaper($reference) : "";
 			my $reviews = reviewsForPaper($reference);
 			print <<END;
@@ -852,7 +852,7 @@ END
 END
 
 		showSubmissionHistory($reference);
-		
+
 			print <<END;
 		</b></p>
 	</td>
@@ -864,7 +864,7 @@ END
 		<input type="hidden" name="authors" value="$authors"/>
 		<input type="hidden" name="review_role" value="Other PC"/>
 		<input type="hidden" name="title" value="$title"/>
-		<input type="submit" value="Vote" 
+		<input type="submit" value="Vote"
 			style="position:relative" $status/>
 		</form>
 	</td>
@@ -881,7 +881,7 @@ END
 #			}
 		}
 	}
-	
+
 	print "</table>\n";
 
 	Format::createFooter();
@@ -889,21 +889,21 @@ END
 
 sub handleVote {
 	my $session = checkCredentials();
-	my ($user, $role) = Session::getUserRole($session);	
+	my ($user, $role) = Session::getUserRole($session);
 
 	my $reference = $q->param("reference");
-	Format::createHeader("Vote", "Enter your decision on paper $reference", "js/validate.js", 1);	
-	
+	Format::createHeader("Vote", "Enter your decision on paper $reference", "js/validate.js", 1);
+
 	# TODO: show form to enter vote
-	
+
 	Format::startForm("post", "vote_submitted", "return checkVoteForm()");
 	Format::createHidden("session", $q->param("session"));
 	Format::createHidden("reference", $reference);
 	Format::createHidden("review_role", $q->param("review_role"));
-	
+
 	my $authors = $q->param("authors");
 	my $title = $q->param("title");
-	
+
 	my $reviews = Decision::getReviews($reference);
 	my @reviewers = keys %$reviews;
 	print <<END;
@@ -951,35 +951,35 @@ END
 </table>
 </dd>
 END
-	
-	Format::createRadioButtonsWithTitleOnOneLine("Your assessment", 
+
+	Format::createRadioButtonsWithTitleOnOneLine("Your assessment",
 		"Please enter or update your assessment", "vote",
 		"-1", "not assessed",
 		"0", "reject",
 		"1", "accept for writing group",
 		"2", "accept for writer's workshop",
 		"-1");
-	Format::createTextBoxWithTitle("Reason", 
+	Format::createTextBoxWithTitle("Reason",
 		"Please comment on the following: " .
 		"Has the paper improved during shephering? " .
 		"Has the author been responsive and open to shepherding? " .
-		"Is this paper in a state which will benefit from a writers workshop?", 
+		"Is this paper in a state which will benefit from a writers workshop?",
 		"reason", 60, 10);
 
 	# TODO: should do something else than go to sign-in (eg close the window)
 
-	Format::endForm("Vote");		
+	Format::endForm("Vote");
 	print <<END;
 <form>
 <p><a href="javascript:window.close();">Close without submitting a vote</a></p>
-</form> 
+</form>
 END
 	Format::createFooter();
 }
 
 sub handleVoteSubmitted {
 	my $session = checkCredentials();
-	my ($user, $role) = Session::getUserRole($session);	
+	my ($user, $role) = Session::getUserRole($session);
 
 	my $vote = $q->param("vote");
 	# -1: not assessed
@@ -988,7 +988,7 @@ sub handleVoteSubmitted {
 	#  2: accept for writer's workshop
 	Assert::assertTrue($vote >= -1 && $vote <= 2,
 		"Oops, you forgot to enter a vote. Please go back to the review form.");
-	
+
 	Format::createHeader("Vote has been submitted", "Thank you", "js/validate.js", 1);
 	Decision::saveVote($timestamp, $user, $q->param("review_role"),
 		$q->param("reference"), $q->param("vote"), $q->param("reason"));
@@ -1006,20 +1006,20 @@ Reason: $reason
 You can review and update your assessement from the shepherding site.
 
 <form>
-<p><input type=button value="Close" 
+<p><input type=button value="Close"
 	onClick="javascript:window.close();"></p>
-</form> 
+</form>
 END
-	Format::createFooter();	
+	Format::createFooter();
 }
 
 # TODO: not used -- moved to separate script (notify?)
 sub handleStatus {
 	my $session = $q->param("session");
 	my $sessionInfo = Session::check($session);
-	Assert::assertTrue($sessionInfo, 
+	Assert::assertTrue($sessionInfo,
 		"Session expired. Please sign in first.");
-		
+
 	my $role = Review::authenticate($q->param("email"), $q->param("password"));
 	unless ($role) {
 		 	Audit::handleError("Please check that you entered the correct user name and password",
@@ -1029,8 +1029,8 @@ sub handleStatus {
 	Session::setUser($q->param("session"), $q->param("email"), $role);
 
 	my $reference = $q->param("reference");
-	Format::createHeader("Status", "Status of the reviews", "js/validate.js");	
-	
+	Format::createHeader("Status", "Status of the reviews", "js/validate.js");
+
 	print <<END;
 	<table>
 		<tbody>
@@ -1038,22 +1038,22 @@ END
 	# TODO: show list of papers and their review status
 	my $currentTrack = -1;
 	my %records = Records::getAllRecords(Records::listCurrent());
-	foreach $label (sort { $records{$a}->param("track") . "_" . $records{$a}->param("reference") cmp 
+	foreach $label (sort { $records{$a}->param("track") . "_" . $records{$a}->param("reference") cmp
 		$records{$b}->param("track") . "_" . $records{$b}->param("reference") } keys %records) {
 		my $record = $records{$label};
 		my $reference = $record->param("reference");
 		unless (Shepherd::status($reference) eq "reject" ||
-        	$record->param("track") eq $FOCUS_GROUP_TRACK) {  
+        	$record->param("track") eq $FOCUS_GROUP_TRACK) {
       		my $authors = Review::getAuthors($record);
 			$authors =~ s|\r\n|, |g;
 
 			my $contact_name = $record->param("contact_name");
 			my $email = $record->param("contact_email");
-			
+
 			my $title = $record->param("title");
 			my $fileName = $record->param("file_name");
 			$fileName =~ s/\.\w+$//;
-			
+
 			my $track = $record->param("track");
 			if ($currentTrack != $track) {
 				# Format::createFreetext("<h3>" . $config->{"track_" . $track} . "</h3>");
@@ -1066,10 +1066,10 @@ END
 END
 				$currentTrack = $track;
 			}
-			
+
 			my $token = uri_escape(Access::token($label));
 			my $tags = Review::getTags($record);
-						
+
 			print <<END;
 		<tr>
 			<td valign="top" width="3%" align="center">
@@ -1102,16 +1102,16 @@ END
 		</tr>
 END
 			}
-			
+
 
 		}
-	} 
-	
+	}
+
 	print <<END;
 			</tbody>
 	</table>
 END
-	
+
 	Format::createFooter();
 }
 
@@ -1124,18 +1124,18 @@ sub handleError {
 
 sub checkCredentials {
 	my $session = $q->param("session");
-	Assert::assertTrue(Session::check($session), 
+	Assert::assertTrue(Session::check($session),
 		"Session expired. Please sign in first.");
-	my ($user, $role) = Session::getUserRole($q->param("session"));	
+	my ($user, $role) = Session::getUserRole($q->param("session"));
 	Assert::assertTrue($user, "You are not logged in");
-	Assert::assertTrue($role eq "shepherd" || $role eq "chair" || $role eq "pc" || $role eq "admin", 
+	Assert::assertTrue($role eq "shepherd" || $role eq "chair" || $role eq "pc" || $role eq "admin",
 		"You are not allowed to access this site");
 	return $session;
 }
 
 sub showSharedMenu {
 	my ($session) = @_;
-	
+
 	print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END
@@ -1150,7 +1150,7 @@ sub sendConfirmationOfSherpherdingBid {
 	my ($email, $firstName, $papers) = @_;
 
 	# DONE: send email to bidder with bids and password
-	my ($sanitizedName) = $firstName =~ m/([\w\s-]*)/;	
+	my ($sanitizedName) = $firstName =~ m/([\w\s-]*)/;
 	my $tmpFileName = Email::tmpFileName($timestamp, $sanitizedName);
 	open (MAIL, ">$tmpFileName");
 	print MAIL <<END;
@@ -1166,15 +1166,15 @@ END
 		my $title = $record->param("title");
 		print MAIL "\t$priority\t$title\n";
 	}
-	
+
 	print MAIL <<END;
-	
+
 Legend:
 \t1\tI would like to shepherd this paper
 \t2\tI could be convinced to shepherd this paper
 \t3\tI am willing to shepherd this paper, but only if nobody else does
-			
-Your bid has been sent to the $CONFERENCE $PROGRAM_CHAIR_TITLE who will confirm them as soon as possible. 
+
+Your bid has been sent to the $CONFERENCE $PROGRAM_CHAIR_TITLE who will confirm them as soon as possible.
 
 Please keep in mind that there may be more then one volunteer for a specific paper. This is the reason why we cannot start shepherding immediately.
 
@@ -1184,12 +1184,12 @@ $config->{"program_chair"}
 $CONFERENCE $PROGRAM_CHAIR_TITLE
 END
 	close (MAIL);
-	
+
 	my $status = Email::send($email, "",
 		"[$CONFERENCE] Shepherding bid confirmation", $tmpFileName);
 	if ($config->{"debug"}) {
 		print "Email: <pre>$status</pre>";
-	} 
+	}
 }
 
 # MAIL 2
@@ -1209,13 +1209,13 @@ END
 		print MAIL "$priority\t$title\n";
 	}
 	close (MAIL);
-	
+
 	my $chair_email = $config->{"program_chair_email"};
 	my $status = Email::send($chair_email, "",
 		"[$CONFERENCE] New shepherding bid", $tmpFileName);
 	if ($config->{"debug"}) {
 		print "Email: <pre>$status</pre>";
-	} 
+	}
 }
 
 # MAIL 3
@@ -1223,19 +1223,19 @@ END
 # NOTE: was not used during EuroPLoP 2008
 sub rejectBid {
 	my ($shepherd_email, $shepherd_name, $label) = @_;
-	
+
 	# DONE: lookup name of shepherd
 	my $shepherd_name = Review::getReviewerName($shepherd_email);
-	
+
 	my $record = Records::getRecord($label);
 	my $authors = Review::getAuthors($record);
 	my $title = $record->param("title");
 	my $reference = $record->param("reference");
 	my %assignment = Shepherd::assignedTo($reference);
-	
+
 	my $assigned_shepherd_name = Review::getReviewerName($assignment{"shepherd"});
 	my ($firstName) = $shepherd_name =~ /^(\w+)/;
-	
+
 	my $tmpFileName = Email::tmpFileName($timestamp, $firstName);
 	open (MAIL, ">$tmpFileName");
 	print MAIL <<END;
@@ -1258,19 +1258,19 @@ $config->{"program_chair"}
 $CONFERENCE $PROGRAM_CHAIR_TITLE
 END
 	close (MAIL);
-	
+
  	my $status = Email::send($shepherd_email, "",
 		"[$CONFERENCE] Paper not available for shepherding", $tmpFileName);
 	if ($config->{"debug"}) {
 		print "Email: <pre>$status</pre>";
-	} 
+	}
 }
 
 # MAIL 4
 # To shepherd after accept
 sub confirmBid {
 	my ($shepherd, $label, $pc) = @_;
-	
+
 	my $shepherd_email = Review::getReviewerEmail($shepherd);
 	my $shepherd_name = Review::getReviewerName($shepherd);
 	my ($firstName) = $shepherd_name =~ /^(\w+)/;
@@ -1280,7 +1280,7 @@ sub confirmBid {
 	my $title = $record->param("title");
 	my $sheep_email = $record->param("contact_email");
 	my $reference = $record->param("reference");
-	
+
 	my $pc_email = Review::getReviewerEmail($pc);
 	my $pc_name = Review::getReviewerName($pc);
 
@@ -1303,18 +1303,18 @@ $CONFERENCE $PROGRAM_CHAIR_TITLE
 END
 	close (MAIL);
 
-	my $status = Email::send($shepherd_email, "$pc_email", 
-		"[$CONFERENCE] Paper assigned for shepherding", $tmpFileName);
+	my $status = Email::send($shepherd_email, "$pc_email",
+		"[$CONFERENCE] Paper assigned for shepherding ($reference)", $tmpFileName);
 	if ($config->{"debug"}) {
 		print "Email: <pre>$status</pre>";
-	} 
+	}
 }
 
 # MAIL 5
 # To sheep after accept
 sub introduceSheepToShepherd {
 	my ($shepherd, $label, $pc) = @_;
-	
+
 	my $shepherd_email = Review::getReviewerEmail($shepherd);
 	my $shepherd_name = Review::getReviewerName($shepherd);
 	my $pc_email = Review::getReviewerEmail($pc);
@@ -1324,24 +1324,28 @@ sub introduceSheepToShepherd {
 	my $authors = Review::getAuthors($record);
 	my $title = $record->param("title");
 	my $reference = $record->param("reference");
-	
+
 	# TODO: store author id in record, not email
 	my $sheep_email = $record->param("contact_email");
 	my $sheep_name = $record->param("contact_name");
-		
+
 	my ($firstName) = $sheep_name =~ /^([^\s]+)/;
 	my $password = getSubmitPassword($reference);
-	
+
 	my $tmpFileName = Email::tmpFileName($timestamp, $firstName);
 	open (MAIL, ">$tmpFileName");
 	print MAIL <<END;
 Dear $firstName,
 
-We are happy to inform you that your paper has been accepted for shepherding. We have assigned $shepherd_name ($shepherd_email) as a shepherd for your paper. During the next weeks, you will interact closely with your shepherd. He/she will read your paper, provide comments, ask questions, offer suggestions for improvement, ...
+We are happy to inform you that your paper has been accepted for shepherding:
+
+$title
+
+We have assigned $shepherd_name ($shepherd_email) as a shepherd for your paper. During the next weeks, you will interact closely with your shepherd. He/she will read your paper, provide comments, ask questions, offer suggestions for improvement, ...
 
 $pc_name ($pc_email) from the $CONFERENCE Program Committee will observe your interaction with the shepherd. He/she can act as a third voice whenever you or your shepherd feel that there's a problem in the process. The PC member will also be one of the final reviewers for your paper. Please keep the PC member in the loop by cc-ing him/her to all mails exchanged with the shepherd.
 
-As a reaction to the shepherd's comments, you will usually create a new version of your paper. Please ensure that you upload this new version to the $CONFERENCE submission system. 
+As a reaction to the shepherd's comments, you will usually create a new version of your paper. Please ensure that you upload this new version to the $CONFERENCE submission system.
 
 Please work hard with your shepherd to create the best possible quality until the final review due date, which is $config->{"second_draft_due_date"}.
 
@@ -1349,13 +1353,13 @@ $config->{"program_chair"}
 $CONFERENCE $PROGRAM_CHAIR_TITLE
 END
 	close (MAIL);
-	
+
 	# TODO: send to sheep, and cc to shepherd and pc member
 	my $status = Email::send($sheep_email, "$shepherd_email,$pc_email",
-		"[$CONFERENCE] Paper accepted for shepherding", $tmpFileName);
+		"[$CONFERENCE] Paper accepted for shepherding ($reference)", $tmpFileName);
 	if ($config->{"debug"}) {
 		print "Email: <pre>$status</pre>";
-	} 
+	}
 }
 
 
@@ -1381,9 +1385,9 @@ END
 	<option value="$pc">$name ($load)</option>
 END
 		}
-	}	
+	}
 	print <<END;
-</select>	
+</select>
 END
 }
 
@@ -1395,7 +1399,7 @@ sub getSubmitPassword {
 	flock(PASSWORD, $LOCK);
 	while (<PASSWORD>) {
 		if (/^$reference, (\w+)/) {
-			$password = $1; 
+			$password = $1;
 			break;
 		}
 	}
@@ -1409,7 +1413,7 @@ sub showSavedBid {
 	my $priority = $preferences->{$user}->{$reference}->{"priority"};
 	if ($priority) {
 		print "<font color=green>$priority</font>";
-	} 
+	}
 }
 
 sub showBids {
@@ -1440,7 +1444,7 @@ sub voteDecisionToText {
 		return "accept for writing group";
 	} elsif ($vote eq "2") {
 		return "accept for writer's workshop";
-	} 
+	}
 }
 
 sub copyWithoutElements {
@@ -1521,14 +1525,14 @@ sub lastUpdated {
 	my $date = lastUpdatedOnDate($reference);
 	if ($time < $cutoff) {
 		return "<font color=red>$date</font>";
-	} 
+	}
 	return $date;
 }
 
 sub lastUpdatedAtTime {
 	my ($reference) = @_;
 	my ($time) = $labels{$reference} =~ /^(\d+)_/;
-	return $time; 
+	return $time;
 }
 
 sub lastUpdatedOnDate {
@@ -1536,7 +1540,7 @@ sub lastUpdatedOnDate {
 	my ($time) = $labels{$reference} =~ /^(\d+)_/;
 	my $lastUpdated = localtime($time);
 	my ($date) = $lastUpdated =~ /^\w+ (\w+\s+\d+)/;
-	return $date; 
+	return $date;
 }
 
 # Main dispatcher

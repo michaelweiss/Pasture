@@ -31,7 +31,7 @@ our $CONFERENCE_WEBSITE = $config->{"conference_website"};
 our $baseUrl = $config->{"url"};
 
 my %titles;
-my %status;	
+my %status;
 my %assignedTo;
 
 BEGIN {
@@ -54,27 +54,32 @@ BEGIN {
 # show bids
 sub handleBids {
 	my $session = checkCredentials();
-	my ($user, $role) = Session::getUserRole($session);	
-	
+	my ($user, $role) = Session::getUserRole($session);
+
 	Format::createHeader("Bids", "", "js/validate.js");
 	showSharedMenu($session);
-	
+
 	my %records = Records::getAllRecords(Records::listCurrent());
 	my $numberOfRecords = scalar keys %records;
 	%titles = getTitles(\%records);
-	
+
 	my $preferences = Shepherd::preferencesByUser();
-	
+
 	Format::createFreetext("Note: Move the mouse over the column heads to see title and track (in parentheses) of the submission by that number.");
 
 	print <<END;
 <style>
 a {
   position: relative;
-} 
+}
 a span {
   display: none;
-}a:hover span {  position: absolute;  display: block;  background: #e0ffff;  border: 1px solid;
+}
+a:hover span {
+  position: absolute;
+  display: block;
+  background: #e0ffff;
+  border: 1px solid;
   left: -15em;
   width: 20em;
   height: 2.4em;
@@ -95,9 +100,9 @@ END
 		if ($assignment{"shepherd"}) {
 			$assignedTo{$bid} = $assignment{"shepherd"};
 		}
-		
-		unless ($status{$bid} eq "rejected" || $status{$bid} eq "withdrawn" ||
-			$titles{$bid} =~ "($config->{'focus_group_track'})") { 
+
+		unless ($status{$bid} eq "rejected" || $status{$bid} eq "withdrawn") {
+#			|| $titles{$bid} =~ "($config->{'focus_group_track'})") {
 			my $showBid = ($bid < 10) ? "&nbsp;$bid&nbsp;" : $bid;
 			my $column = "<em>$showBid</em><span>$titles{$bid}</span>";
 			if ($assignedTo{$bid}) {
@@ -113,7 +118,7 @@ END
 	}
 	print "</table>\n";
 	print "<br/>";
-  
+
 	Format::createFooter();
 }
 
@@ -140,7 +145,7 @@ sub showBidsForUser {
 					print "<td align=\"center\">$priority</td>";
 				}
 			} else {
-				print "<td align=\"center\" bgcolor=\"lightgreen\">$priority</td>";				
+				print "<td align=\"center\" bgcolor=\"lightgreen\">$priority</td>";
 			}
 		} else {
 			print "<td>&nbsp;</td>";
@@ -153,7 +158,7 @@ sub generateAcceptUrl {
 	my ($user, $timestamp, $reference) = @_;
 	my $label = $timestamp . "_" . $reference;
 	my $token = Access::token($user . "_" . $label);
-	return $config->{"url"} . 
+	return $config->{"url"} .
 		"/shepherd.cgi?action=accept&user=$user&label=$label&token=$token";
 }
 
@@ -216,18 +221,18 @@ sub checkPassword {
 
 sub checkCredentials {
 	my $session = $q->param("session");
-	Assert::assertTrue(Session::check($session), 
+	Assert::assertTrue(Session::check($session),
 		"Session expired. Please sign in first.");
-	my ($user, $role) = Session::getUserRole($q->param("session"));	
+	my ($user, $role) = Session::getUserRole($q->param("session"));
 	Assert::assertTrue($user, "You are not logged in");
-	Assert::assertTrue($role eq "chair" || $role eq "admin", 
+	Assert::assertTrue($role eq "chair" || $role eq "admin",
 		"You are not allowed to access this site");
 	return $session;
 }
 
 sub showSharedMenu {
 	my ($session) = @_;
-	
+
 	print <<END;
 	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
 END

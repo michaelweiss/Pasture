@@ -62,7 +62,7 @@ BEGIN {
 sub handleSignIn {
 	Format::createHeader("Gate > Sign in", "", "js/validate.js");
 	Format::startForm("post", "menu");
-	
+
 	unless ($config->{"making_changes"}) {
 		# TODO: add hidden field or session parameter in cookie for the user's role
 		# we might want to log in users as a shepherd when they sign up to become a shepherd
@@ -85,7 +85,7 @@ sub handleSignIn {
 END
 
 		Format::endForm("Sign in");
-	
+
 		Format::createFreetext(
 			"If you do not have an account, please <a href=\"$baseUrl/$script?action=sign_up\">sign up for one</a>.");
 		Format::createFreetext(
@@ -99,7 +99,7 @@ END
 	<p>Please check back in a few minutes.</p>
 END
 	}
-		
+
 	print <<END;
 	</div>
 END
@@ -108,30 +108,30 @@ END
 }
 
 # Handle menu request
-sub handleMenu {	
+sub handleMenu {
 	my $session = $q->param("session");
-	my ($user, $role) = Session::getUserRole($session);	
-	
+	my ($user, $role) = Session::getUserRole($session);
+
 	unless ($user && $role) {
 		Assert::assertNotEmpty("user", "Need to enter a user name");
 		Assert::assertNotEmpty("password", "Need to enter a password");
-	
+
 		# convert user name to lower case
 		$user = lc($q->param("user"));
 		my $password = $q->param("password");
-			
+
 		$role = checkPassword($user, $password);
 		Assert::assertTrue($role, "User name and password do not match");
-		
+
 		$session = Session::create(Session::uniqueId(), $timestamp);
 		Session::setUser($session, $user, $role);
 	}
-	
+
 	my %profile = User::loadUser($user);
 	my %contact = Contact::loadContact($user);
-	
+
 	Format::createHeader("Gate > Menu");
-	
+
 	print <<END;
 <p>Dear $profile{"firstName"}, you are logged into the <a href="$CONFERENCE_WEBSITE">$CONFERENCE</a> submission site as <b>$role</b>.</p>
 
@@ -155,22 +155,22 @@ END
 <ul>
 	<li>Change role to:
 END
-	
+
 	my @roles = Role::getRoles($user, $CONFERENCE_ID);
 	my $first = 1;
 	foreach (@roles) {
 		unless ($_ eq $role) {
-			print " <a href=\"$baseUrl/$script?action=change_role&session=$session&role=$_\">$_</a>";	
+			print " <a href=\"$baseUrl/$script?action=change_role&session=$session&role=$_\">$_</a>";
 		}
 	}
 	print "</li>\n";
-	
+
 	print <<END;
 	<li>Change conference</li>
 </ul>
 </div>
 END
-		
+
 	Format::createFooter();
 }
 
@@ -178,7 +178,7 @@ END
 sub handleSignUp {
 	Format::createHeader("Gate > Sign up", "", "js/validate.js");
 	Format::startForm("post", "profile");
-	
+
 	print <<END;
 	<p>To sign up for an account, please fill in your profile.</p>
 
@@ -229,7 +229,7 @@ sub handleSignUp {
 END
 
 	Format::endForm("Sign up");
-		
+
 	print <<END;
 	</div>
 END
@@ -240,14 +240,14 @@ END
 # Handle change role request
 sub handleChangeRole {
 	my $session = $q->param("session");
-	my ($user, $role) = Session::getUserRole($session);	
-	
+	my ($user, $role) = Session::getUserRole($session);
+
 	# user can only switch into new role, if s/he has that role
 	my $newRole = $q->param("role");
 	Assert::assertTrue(Role::hasRole($user, $CONFERENCE_ID, $newRole),
 		"No privileges to change to this role");
 	Session::setUser($session, $user, $newRole);
-	
+
 	# redirect to handle menu request
 	print $q->redirect(-uri => "$baseUrl/$script?action=menu&session=$session");
 }
@@ -255,10 +255,10 @@ sub handleChangeRole {
 # Handle shepherd request
 sub handleBecomeShepherd {
 	my $session = $q->param("session");
-	my ($user, $role) = Session::getUserRole($session);	
-	
+	my ($user, $role) = Session::getUserRole($session);
+
 	Session::setUser($session, $user, "shepherd");
-	
+
 	# redirect to handle menu request
 	print $q->redirect(-uri => $baseUrl . "/shepherd.cgi?session=$session");
 }
@@ -267,8 +267,8 @@ sub handleBecomeShepherd {
 sub handleProfile {
 	my $user, $firstName, $lastName;
 	my $email, $affiliation, $country;
-	my $password, $passwordConfirmed; 
-	
+	my $password, $passwordConfirmed;
+
 	Assert::assertNotEmpty("user", "Need to enter a user name");
 	Assert::assertNotEmpty("firstName", "Need to enter your first name");
 	Assert::assertNotEmpty("lastName", "Need to enter your last name");
@@ -287,31 +287,31 @@ sub handleProfile {
 	$country = $::q->param("country");
 	$password = $::q->param("password");
 	$passwordConfirmed = $::q->param("passwordConfirmed");
-	
+
 	# TODO: check that user name is a single word, which may contain numbers
-	
+
 	# check whether this user name is taken already
 	Assert::assertTrue(! Password::existsUser($user),
 		"This user name already exists. Please select a different name");
-		
+
 	# check whether the passwords match
-	Assert::assertTrue($password eq $passwordConfirmed, 
+	Assert::assertTrue($password eq $passwordConfirmed,
 		"Passwords do not match");
-			
+
 	Password::logUserPassword($user, $password);
 	User::saveUser($user, $firstName, $lastName, $affiliation, $country);
 	Contact::saveContact($user, $email);
 
 	# default role is author
 	my $role = "author";
-	
+
 	Format::createHeader("Gate > Profile", "", "js/validate.js");
-	
+
 	print <<END;
 <p>Hello, $firstName $lastName. Your account has been created.</p>
 <p>You can now <a href=\"$baseUrl/$script?action=sign_in\">log into the submission system</a>.</p>
 END
-	
+
 	Format::createFooter();
 }
 
@@ -326,7 +326,7 @@ sub handleSendLogin {
 		# form will send user back to this handler
 		Format::createHeader("Gate > Reset password", "", "js/validate.js");
 		Format::startForm("post", "send_login");
-		
+
 		print <<END;
 	<p>To reset your password please enter your user name. You will receive an email asking
 	you to confirm. You can then enter your new password.</p>
@@ -342,13 +342,13 @@ sub handleSendLogin {
 END
 
 		Format::endForm("Reset password");
-		
+
 		print <<END;
 	</div>
 END
 
 		Format::createFooter();
-		
+
 	}
 }
 
@@ -359,15 +359,15 @@ sub handlePassword {
 	$user = $q->param("user");
 	Assert::assertTrue(Access::check($q->param("token"), $user),
 		"Token does not match");
-	
+
 	$session = Session::create(Session::uniqueId(), $timestamp);
 	Session::setUser($session, $user, "author");
-	
+
 	Format::createHeader("Gate > Password", "", "js/validate.js");
 
 	Format::startForm("post", "change_password");
 	Format::createHidden("session", $session);
-	
+
 	print <<END;
 	<p>To change your password, enter and confirm your new password.</p>
 
@@ -386,34 +386,34 @@ sub handlePassword {
 END
 
 	Format::endForm("Change password");
-	
+
 	print <<END;
 	</div>
 END
-	
-	Format::createFooter();	
+
+	Format::createFooter();
 }
 
 # Handle change password requests
 sub handleChangePassword {
 	my $session = $q->param("session");
-	my ($user, $role) = Session::getUserRole($session);	
-	Assert::assertTrue($user, 
+	my ($user, $role) = Session::getUserRole($session);
+	Assert::assertTrue($user,
 		"You are not allowed to change this password");
-	
+
 	Assert::assertNotEmpty("password", "Need to enter a password");
-	Assert::assertNotEmpty("passwordConfirmed", "Need to confirm your password");	
-	
+	Assert::assertNotEmpty("passwordConfirmed", "Need to confirm your password");
+
 	my $password = $q->param("password");
 	my $passwordConfirmed = $q->param("passwordConfirmed");
-	
+
 	# check whether the passwords match
-	Assert::assertTrue($password eq $passwordConfirmed, 
+	Assert::assertTrue($password eq $passwordConfirmed,
 		"Passwords do not match");
-			
-	# TODO: change logUserPassword to replace existing password	
+
+	# TODO: change logUserPassword to replace existing password
 	Password::logUserPassword($user, $password);
-	
+
 	# redirect to handle menu request
 	print $q->redirect(-uri => "$baseUrl/$script");
 }
@@ -422,7 +422,7 @@ sub handleChangePassword {
 sub checkPassword {
 	my ($user, $password) = @_;
 	# if user and password are correct, allow the user to access the system
-	# default user role is "author"  
+	# default user role is "author"
 	# TODO: should remember the last role the user was logged in as
 	if (Password::checkUserPassword($user, $password)) {
 		return "author";
@@ -438,28 +438,28 @@ sub authorMenu {
 END
 
 	# user can submit a paper ...
-	Format::createAction($SUBMISSION_OPEN, $baseUrl . "/submit.cgi?action=submit&session=$session&status=new", 
+	Format::createAction($SUBMISSION_OPEN, $baseUrl . "/submit.cgi?action=submit&session=$session&status=new",
 		"Submit a new paper", "closed");
-	
+
 	# DONE: need to rewrite getReferencesByAuthor to read from submission log
 	my @references = Submission::lookupSubmissionsByAuthor($user);
 	my %labels = Records::listCurrent();
 	foreach $reference (@references) {
-		my $record = Records::getRecord($labels{$reference}); 
+		my $record = Records::getRecord($labels{$reference});
 		my $title = $record->param("title");
 		print <<END;
 		<li><a href="submit.cgi?action=submit&session=$session&status=existing&reference=$reference">Update your submission (#$reference): $title</a></li>
 END
 	}
-	
+
 	# ... or sign up as a shepherd
-	Format::createAction($SHEPHERD_SUBMISSION_OPEN, "$baseUrl/$script?action=shepherd&session=$session", 
+	Format::createAction($SHEPHERD_SUBMISSION_OPEN, "$baseUrl/$script?action=shepherd&session=$session",
 		"Become a shepherd", "we are not looking for shepherds at this time");
-	
+
 	# register
-	Format::createAction($REGISTRATION_OPEN, "$baseUrl/register.cgi?session=$session", 
+	Format::createAction($REGISTRATION_OPEN, "$baseUrl/register.cgi?session=$session",
 		"Register for the conference", "Registration is now closed") if ($REGISTRATION_OPEN);
-		
+
 	print <<END;
 	</ul>
 END
@@ -471,7 +471,7 @@ sub pcMenu {
 	<ul>
 END
 
-	Format::createAction($SCREEN_OPEN, $baseUrl . "/screen.cgi?action=submissions&session=$session", 
+	Format::createAction($SCREEN_OPEN, $baseUrl . "/screen.cgi?action=submissions&session=$session",
 		"Screen initial submissions", "closed");
 
 	print <<END;
@@ -489,6 +489,7 @@ sub adminMenu {
 		<li><a href="admin.cgi?action=view_submissions&session=$session">View submissions</a></li>
 		<li><a href="admin.cgi?action=authors&session=$session">View authors</a></li>
 		<li><a href="admin.cgi?action=pc&session=$session">View PC members</a></li>
+    <li><a href="admin.cgi?action=review_status&session=$session">Check review status</a></li>
 		<li><a href="bids.cgi?session=$session">Assign shepherds (bids)</a></li>
 		<li><a href="admin.cgi?action=shepherds&session=$session">View shepherds</a></li>
 		<li><a href="admin.cgi?action=participants&session=$session">View participants</a></li>
@@ -502,41 +503,41 @@ sub shepherdMenu {
 	print <<END;
 	<ul>
 END
-	
-	Format::createAction($SHEPHERD_SUBMISSION_OPEN, "$baseUrl/$script?action=shepherd&session=$session", 
+
+	Format::createAction($SHEPHERD_SUBMISSION_OPEN, "$baseUrl/$script?action=shepherd&session=$session",
 		"Submit additional bids", "no more bids required");
-	
+
 	print <<END;
 		<li><a href="shepherd.cgi?action=shepherded_papers&user=$user&role=shepherd&session=$session">View all papers you are shepherding</a></li>
 		<li><a href="shepherd.cgi?action=assignments&session=$session">Screen updated submissions</a></li>
 	</ul>
 END
 }
-	
+
 # Emails
 
 sub sendResetPasswordToken {
 	my ($user) = @_;
-	
+
 	my %contact = Contact::loadContact($user);
 	my $email = $contact{"email"};
-	
+
 	my %user = User::loadUser($user);
 	my $name = $user{"firstName"} . $user{"lastName"};
 	my $firstName = $user{"firstName"};
-	
+
 	# create temporary file
-	my ($sanitizedName) = $name	=~ m/([\w\s-]*)/;	
+	my ($sanitizedName) = $name	=~ m/([\w\s-]*)/;
 	my $tmpFileName = Email::tmpFileName($timestamp, $sanitizedName);
 
 	my $token = uri_escape(Access::token($user));
-	open (MAIL, ">$tmpFileName") || 
+	open (MAIL, ">$tmpFileName") ||
 		Audit::handleError("Cannot create temporary file: $tmpFileName");
 	print MAIL <<END;
 Dear $firstName,
 
-A request to reset your password has been received. To reset your password, 
-please click on the following URL: 
+A request to reset your password has been received. To reset your password,
+please click on the following URL:
 
 $baseUrl/$script?action=password&user=$user&token=$token
 
@@ -545,7 +546,7 @@ $CONFERENCE Web Chair
 END
 	close (MAIL);
 	my $status = Email::send($email, "",
-		"[$CONFERENCE] Request to reset password", 
+		"[$CONFERENCE] Request to reset password",
 		$tmpFileName, 0);
 	return $status;
 }

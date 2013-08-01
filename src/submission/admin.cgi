@@ -19,6 +19,7 @@ use Core::Register;
 use Core::Role;
 use Core::Contact;
 use Core::Debug;
+use Core::Review::Status;
 
 my $LOCK = 2;
 my $UNLOCK = 8;
@@ -511,6 +512,29 @@ END
 	Format::createFooter();
 }
 
+# handle review status
+sub handleReviewStatus {
+	my $session = checkCredentials();
+
+	Format::createHeader("Admin > Review Status");
+
+	print <<END;
+	<p>[ <a href="gate.cgi?action=menu&session=$session">Menu</a> ]</p>
+END
+
+	print <<END;
+	<div id="widebox">
+END
+
+  Status::createReport();
+
+	print <<END;
+	</div>
+END
+
+	Format::createFooter();
+}
+
 # handle request to edit assignments
 sub handleAssignments {
 	my $session = checkCredentials();
@@ -845,6 +869,8 @@ if ($action eq "menu") {
 	handleAuthors();
 } elsif ($action eq "pc") {
 	handlePc();
+} elsif ($action eq "review_status") {
+  handleReviewStatus();
 } elsif ($action eq "add_role") {
 	handleAddRole();
 } elsif ($action eq "remove_role") {
