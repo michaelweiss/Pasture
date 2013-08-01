@@ -556,6 +556,10 @@ END
 
 sub updateAssignments {
 	my @pcMembers = @_;
+	# Reset the assignments. Otherwise the existing assignments will be loaded first, 
+	# which is not what we want here, & hence no assignments can be removed.
+	# TODO: might be more logical to use an unassignPaper() function
+	Assign::newAssignments();
 	foreach $reviewer (@pcMembers) {
 		# Still a proof of concept, not the final tool
 		# TODO: make number of papers assigned to each PC configurable

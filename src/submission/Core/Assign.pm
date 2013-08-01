@@ -12,6 +12,10 @@ unless (-e "data/screen") {
 		Audit::handleError("Cannot create screen directory");
 }
 
+sub newAssignments {
+	%assignments = ();
+}
+
 sub getAssignments {
 	unless (%assignments) {
 		loadAssignments(); 
