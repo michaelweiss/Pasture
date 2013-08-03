@@ -183,51 +183,9 @@ sub handleSignUp {
 	<p>To sign up for an account, please fill in your profile.</p>
 
 	<div id="widebox">
-	<table cellpadding="0" cellspacing="5">
-		<tr>
-			<td>Select a user name (*):</td>
-			<td width="10"></td>
-			<td><input name="user" type="text"/></td>
-		</tr><tr>
-			<td></td>
-			<td width="10"></td>
-			<td><em>User names must be in one word, but can contain numbers</em></td>
-		</tr><tr>
-			<td>&nbsp;</td>
-			<td width="10"></td>
-			<td></td>
-		</tr><tr>
-			<td>First name (*):</td>
-			<td width="10"></td>
-			<td><input name="firstName" type="text" size="40"/></td>
-		</tr><tr>
-			<td>Last name (*):</td>
-			<td width="10"></td>
-			<td><input name="lastName" type="text" size="40"/></td>
-		</tr><tr>
-			<td>Email (*):</td>
-			<td width="10"></td>
-			<td><input name="email" type="text" size="40"/></td>
-		</tr><tr>
-			<td>Affiliation (*):</td>
-			<td width="10"></td>
-			<td><input name="affiliation" type="text" size="40"/></td>
-		</tr><tr>
-			<td>Country (*):</td>
-			<td width="10"></td>
-			<td><input name="country" type="text"/></td>
-		</tr><tr>
-			<td>Password (*):</td>
-			<td width="10"></td>
-			<td><input name="password" type="password"/></td>
-		</tr><tr>
-			<td>Confirm your password (*):</td>
-			<td width="10"></td>
-			<td><input name="passwordConfirmed" type="password"/></td>
-		</tr>
-	</table>
 END
 
+	userProfileFields();
 	Format::endForm("Sign up");
 
 	print <<END;
@@ -312,6 +270,12 @@ sub handleProfile {
 <p>You can now <a href=\"$baseUrl/$script?action=sign_in\">log into the submission system</a>.</p>
 END
 
+	Format::createFooter();
+}
+
+# Handle update profile requests
+sub handleUpdateProfile {
+	Format::createHeader("Gate > Update profile", "", "js/validate.js");
 	Format::createFooter();
 }
 
@@ -459,6 +423,10 @@ END
 	# register
 	Format::createAction($REGISTRATION_OPEN, "$baseUrl/register.cgi?session=$session",
 		"Register for the conference", "Registration is now closed") if ($REGISTRATION_OPEN);
+		
+	# update user profile
+	Format::createAction(1, "$baseUrl/$script?action=update_profile", 
+		"Update your profile", "NA");
 
 	print <<END;
 	</ul>
@@ -514,6 +482,56 @@ END
 END
 }
 
+# Create user profile fields
+# TODO: populate from existing profile given a user name
+sub userProfileFields {
+	print <<END;
+	<table cellpadding="0" cellspacing="5">
+		<tr>
+			<td>Select a user name (*):</td>
+			<td width="10"></td>
+			<td><input name="user" type="text"/></td>
+		</tr><tr>
+			<td></td>
+			<td width="10"></td>
+			<td><em>User names must be in one word, but can contain numbers</em></td>
+		</tr><tr>
+			<td>&nbsp;</td>
+			<td width="10"></td>
+			<td></td>
+		</tr><tr>
+			<td>First name (*):</td>
+			<td width="10"></td>
+			<td><input name="firstName" type="text" size="40"/></td>
+		</tr><tr>
+			<td>Last name (*):</td>
+			<td width="10"></td>
+			<td><input name="lastName" type="text" size="40"/></td>
+		</tr><tr>
+			<td>Email (*):</td>
+			<td width="10"></td>
+			<td><input name="email" type="text" size="40"/></td>
+		</tr><tr>
+			<td>Affiliation (*):</td>
+			<td width="10"></td>
+			<td><input name="affiliation" type="text" size="40"/></td>
+		</tr><tr>
+			<td>Country (*):</td>
+			<td width="10"></td>
+			<td><input name="country" type="text"/></td>
+		</tr><tr>
+			<td>Password (*):</td>
+			<td width="10"></td>
+			<td><input name="password" type="password"/></td>
+		</tr><tr>
+			<td>Confirm your password (*):</td>
+			<td width="10"></td>
+			<td><input name="passwordConfirmed" type="password"/></td>
+		</tr>
+	</table>
+END
+}
+
 # Emails
 
 sub sendResetPasswordToken {
@@ -564,6 +582,8 @@ if ($action eq "sign_in") {
 	handleSignUp();
 } elsif ($action eq "profile") {
 	handleProfile();
+}  elsif ($action eq "update_profile") {
+	handleUpdateProfile();
 } elsif ($action eq "change_role") {
 	handleChangeRole();
 } elsif ($action eq "shepherd") {
