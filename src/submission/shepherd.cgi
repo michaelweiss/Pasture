@@ -823,6 +823,17 @@ END
 	# These can be combined, since the screening assignment lists all papers assigned
 	# to a reviewer, including if the reviewer is a chair
 
+	# For chairs show all remaining papers that are under consideration
+	if (Role::hasRole($user, $CONFERENCE_ID, "admin")) {
+		@initialPcForPaper = Decision::getAllPapersExceptRejected();
+		# TODO: show this information in a separate pick in the admin menu
+		# TODO: should remove papers that chair is shepherding or supervising as pc,
+		# but for now this is just fine, even though not perfect
+		print "<!-- user has admin role -->\n";
+	} else {
+		print "<!-- user does not have admin role -->\n";
+	}
+	
 	if (scalar @initialPcForPaper > 0) {
 		print <<END;
 <tr><td height="10"></td></tr>

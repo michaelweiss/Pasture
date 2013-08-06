@@ -7,6 +7,7 @@ use Core::Audit;
 use Core::Serialize;
 use Core::Screen;
 use Core::Shepherd;
+use Core::Serialize::Records;
 
 our $config = Serialize::getConfig();
 our $WEBCHAIR_EMAIL = $config->{"web_chair_email"};
@@ -149,6 +150,30 @@ sub getScreenAssignmentsExceptRejected {
 		}
 	}
 	return @asssignedPapers;
+}
+
+=pod
+Get all papers (except rejected ones).
+=cut
+
+sub getAllPapersExceptRejected {
+	my %submitted = Records::listCurrent();
+	my @submitted = keys %submitted;
+	my @stillConsidered ;
+	foreach $paper (@submitted) {
+		unless (rejectedWithdrawnOrPending($paper)) {
+			push (@stillConsidered, $paper);
+		}
+	}
+	return sort { $a <=> $b } @stillConsidered;
+}
+
+sub rejectedWithdrawnOrPending {
+	my ($paper) = @_;
+	return 
+		Shepherd::status($paper) eq "rejected" ||
+		Shepherd::status($paper) eq "withdrawn" ||
+		Shepherd::status($paper) eq "pending";
 }
 
 =pod
