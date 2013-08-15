@@ -1,5 +1,8 @@
 package User;
 
+use strict;
+use warnings;
+
 use lib '.';
 use Core::Audit;
 use Core::Lock;
@@ -16,6 +19,7 @@ sub saveUser {
 
 sub loadUser {
 	my ($user) = @_;
+	my (@profile, %profile);
 	Lock::lock("data", "users");
 	open(LOG, "data/users.dat") ||
 		Audit::handleError("Could not load user profile");
@@ -25,8 +29,8 @@ sub loadUser {
 			@profile = split(/\t/);
 		}
 	}
-	my %profile, $i=0;
-	foreach $key ("user", "firstName", "lastName", "affiliation", "country") {
+	my $i=0;
+	foreach my $key ("user", "firstName", "lastName", "affiliation", "country") {
 		$profile{$key} =  $profile[$i++];
 	}
 	close(LOG);
