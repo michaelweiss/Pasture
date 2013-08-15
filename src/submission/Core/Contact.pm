@@ -1,5 +1,8 @@
 package Contact;
 
+use strict;
+use warnings;
+
 use lib '.';
 use Core::Audit;
 use Core::Lock;
@@ -16,6 +19,7 @@ sub saveContact {
 
 sub loadContact {
 	my ($user) = @_;
+	my (@contact, %contact);
 	Lock::lock("data", "contacts");
 	open(LOG, "data/contacts.dat") ||
 		Audit::handleError("Could not load contact information");
@@ -25,8 +29,8 @@ sub loadContact {
 			@contact = split(/\t/);
 		}
 	}
-	my %contact, $i=0;
-	foreach $key ("user", "email") {
+	my $i=0;
+	foreach my $key ("user", "email") {
 		$contact{$key} =  $contact[$i++];
 	}
 	close(LOG);
@@ -38,6 +42,7 @@ sub loadContact {
 # TODO: refactor (only one line different from loadContact)
 sub lookupContactByEmail {
 	my ($email) = @_;
+	my (@contact, %contact);
 	Lock::lock("data", "contacts");
 	open(LOG, "data/contacts.dat") ||
 		Audit::handleError("Could not load contact information");
@@ -47,8 +52,8 @@ sub lookupContactByEmail {
 			@contact = split(/\t/);
 		}
 	}
-	my %contact, $i=0;
-	foreach $key ("user", "email") {
+	my $i=0;
+	foreach my $key ("user", "email") {
 		$contact{$key} =  $contact[$i++];
 	}
 	close(LOG);
