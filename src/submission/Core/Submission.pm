@@ -1,5 +1,8 @@
 package Submission;
 
+use strict;
+use warnings;
+
 use lib '.';
 use Core::Audit;
 use Core::Lock;
@@ -16,6 +19,7 @@ sub recordSubmission {
 
 sub lookupSubmission {
 	my ($reference) = @_;
+	my (@submission, %submission);
 	Lock::lock("data", "submissions");
 	open(LOG, "data/submissions.dat") ||
 		Audit::handleError("Could not lookup submission");
@@ -25,8 +29,8 @@ sub lookupSubmission {
 			@submission = split(/\t/);
 		}
 	}
-	my %submission, $i=0;
-	foreach $key ("reference", "user") {
+	my $i=0;
+	foreach my $key ("reference", "user") {
 		$submission{$key} =  $submission[$i++];
 	}
 	close(LOG);
