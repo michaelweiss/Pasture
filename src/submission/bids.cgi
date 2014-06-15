@@ -101,8 +101,8 @@ END
 			$assignedTo{$bid} = $assignment{"shepherd"};
 		}
 
-		unless ($status{$bid} eq "rejected" || $status{$bid} eq "withdrawn") {
-#			|| $titles{$bid} =~ "($config->{'focus_group_track'})") {
+		unless ($status{$bid} eq "rejected" || $status{$bid} eq "withdrawn" ||
+				$titles{$bid} =~ "($config->{'focus_group_track'})") {
 			my $showBid = ($bid < 10) ? "&nbsp;$bid&nbsp;" : $bid;
 			my $column = "<em>$showBid</em><span>$titles{$bid}</span>";
 			if ($assignedTo{$bid}) {

@@ -1,6 +1,6 @@
 <?php
 // configuration data
-$config = parse_ini_file("data/config.dat");
+$config = parse_config();
 $conference = $config["conference"];
 $program_chair_email = $config["program_chair_email"];
 $conference_chair_email = $config["conference_chair_email"];
@@ -21,15 +21,18 @@ if (preg_match("/^data\/mail\/tmp_(\d*)_(\w+).txt$/", $body) == 0) {
 	echo "Incorrect email path";
 } else {
 	$fh = fopen($body, 'r');	// read from a temporary file
-								// TODO: remove file	if ($fh == false) {
+								// TODO: remove file
+	if ($fh == false) {
 		echo "No such email";
-	} else {		$message = fread($fh, fileSize($body));		fclose($fh);
+	} else {
+		$message = fread($fh, fileSize($body));
+		fclose($fh);
 		
 		if ($debug) {
 			// settings for testing
 			$to = $web_chair_email;
-			$headers = 'From: ' . $web_chair_email . "\r\n" .
-		    	'X-Mailer: PHP/' . phpversion();
+			$headers = "From: " . $web_chair_email . "\r\n" .
+		    	"X-Mailer: PHP/" . phpversion();
 		} else {	
 			// settings for actual use
 			$to = $email;
@@ -43,11 +46,11 @@ if (preg_match("/^data\/mail\/tmp_(\d*)_(\w+).txt$/", $body) == 0) {
 			} else {
 				$cc = "$program_chair_email" . "," . $conference_chair_email . "," . $cc;
 			}
-			$headers = 'From: ' . $program_chair_email . "\r\n" .
-				'CC: ' . $cc . "\r\n" .
-				'Reply-To: ' . $program_chair_email . "," . $conference_chair_email . "\r\n" .
-				'BCC: ' . $web_chair_email . "\r\n" .
-				'X-Mailer: PHP/' . phpversion();
+			$headers = "From: " . $program_chair_email . "\r\n" .
+				"CC: " . $cc . "\r\n" .
+				"Reply-To: " . $program_chair_email . "," . $conference_chair_email . "\r\n" .
+				"BCC: " . $web_chair_email . "\r\n" .
+				"X-Mailer: PHP/" . phpversion();
 		}
 		
 		$status = mail($to, $subject, "$message", $headers);
@@ -57,5 +60,15 @@ if (preg_match("/^data\/mail\/tmp_(\d*)_(\w+).txt$/", $body) == 0) {
 			echo "Could not send email";
 		}
 	}
+}
+
+function parse_config() {
+	$file = fopen("data/config.dat", "rb");
+	while (!feof($file) ) {
+		$line = explode('=', chop(fgets($file)));	// remove trailing newline
+		$config[$line[0]] = $line[1];
+	}
+	fclose($file);
+	return $config;
 }
 ?>

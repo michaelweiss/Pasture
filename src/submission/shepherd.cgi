@@ -647,12 +647,12 @@ END
 
 	# initial PC assignments
 	my @initialPcForPaper;
-	unless ($pcCanViewAll) {
+	# unless ($pcCanViewAll) {
 		@initialPcForPaper = Decision::getScreenAssignmentsExceptRejected($user);
-	} else {
-		my $chair = $config->{"program_chair_user"};
-		@initialPcForPaper = Decision::getScreenAssignmentsExceptRejected($chair);
-	}
+	# } else {
+	#	my $chair = $config->{"program_chair_user"};
+	#	@initialPcForPaper = Decision::getScreenAssignmentsExceptRejected($chair);
+	# }
 
 #	@initialPcForPaper = Screen::getAssignments($user);
 	my $debugIntialPcForPaper = join(", ", @initialPcForPaper);
@@ -696,7 +696,7 @@ END
 	if ($pcCanViewAll) {
 		print <<END;
   <tr><td colspan=2><b>Special instructions</b></td></tr>
-  <tr><td colspan=2><p>At this phase of the review, you can see all submissions and comment on them. Please look at the problematic papers, and at papers that do not have any reviews yet.</p>
+  <tr><td colspan=2><p>At this phase of the review, you can see all submissions and comment on them. Please look at the problematic papers, and at papers that do not have any reviews yet.</p><br/>
 	<p>We want to complete the reviews by $config->{"shepherding_decisions_date"}.</p>
   </td></tr>
 END
@@ -824,7 +824,7 @@ END
 	# to a reviewer, including if the reviewer is a chair
 
 	# For chairs show all remaining papers that are under consideration
-	if (Role::hasRole($user, $CONFERENCE_ID, "admin")) {
+	if (Role::hasRole($user, $CONFERENCE_ID, "admin") || $pcCanViewAll) {
 		@initialPcForPaper = Decision::getAllPapersExceptRejected();
 		# TODO: show this information in a separate pick in the admin menu
 		# TODO: should remove papers that chair is shepherding or supervising as pc,

@@ -441,7 +441,8 @@ sub canSeeRecord {
 	if ($config->{"pc_can_screen_all"}) {
 		return 1; 			# if pc_can_screen_all, allow all pc to see all records
 	}
-	if ($role eq "admin") {
+	# if ($role eq "admin") {
+	if (Role::hasRole($user, $CONFERENCE_ID, "admin")) {
 		return 1;			# admin/chair can see all
 	}
 	my @submissions = Screen::getAssignments($user);

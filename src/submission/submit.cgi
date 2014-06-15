@@ -541,7 +541,7 @@ sub sendSubmissionConfirmation {
 #	NOTE: can defer this until shepherds are assigned
 
 	my $trackTitle = $config->{"track_$track"};
-	my $trackChairEmail = $config->{"track_$track_chair_email"};
+	my $trackChairEmail = $config->{"track_${track}_chair_email"};
 
 	my ($sanitizedName) = $name	=~ m/([\w\s-]*)/;	
 	my $tmpFileName = Email::tmpFileName($timestamp, $sanitizedName);
@@ -591,12 +591,10 @@ sub notifyChairsOfSubmission {
 	my $label = $timestamp . "_" . $reference;
 	my $token = Access::token($label);
 
-	my %assignment = Shepherd::assignedTo($reference);
-	my $shepherdAndPcEmails = ($assignment{"shepherd"}) ?
-		"," . $assignment{"shepherd"} . "," . $assignment{"pc"} : "";
+	my $shepherdAndPcEmails = shepherdAndPcEmails($reference);
 
 	my $trackTitle = $config->{"track_$track"};
-	my $trackChairEmail = $config->{"track_" . $track . "_chair_email"};
+	my $trackChairEmail = $config->{"track_${track}_chair_email"};
 	
 	# temporary file name is PROGRAM_CHAIR name plus "_" to cover the
 	# particular case that the chair submits a paper
@@ -635,6 +633,19 @@ END
 		"[$CONFERENCE] $status submission $reference received", 
 		$tmpFileName, 0);
 	return $mail_status;
+}
+
+sub shepherdAndPcEmails {
+	my ($reference) = @_;
+	my %assignment = Shepherd::assignedTo($reference);
+	if ($assignment{"shepherd"}) {
+		# lookup shepherd's and pc member's contact information
+		my %shepherd = Contact::loadContact($assignment{"shepherd"});
+		my %pc = Contact::loadContact($assignment{"pc"});
+		return "," . $shepherd{"email"} . "," . $pc{"email"};
+	} else {
+		return "";
+	}
 }
 
 # Recover the password for a submission. Send to the contact author's email.

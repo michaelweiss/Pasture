@@ -67,9 +67,11 @@ sub handleMenu {
 		<li><a href="$script?action=view_submissions&session=$session">View submissions</a></li>
 		<li><a href="$script?action=authors&session=$session">View authors</a></li>
 		<li><a href="$script?action=pc&session=$session">View PC members</a></li>
+		<li><a href="$script?action=assignments&role=admin&session=$session">Edit screening assignments</a></li>
 		<li><a href="$script?action=shepherds&session=$session">View shepherds</a></li>
 		<li><a href="admin.cgi?action=participants&session=$session">View participants</a></li>
 		<li><a href="admin.cgi?action=participants&session=$session&format=csv">View participants as CSV list</a></li>
+		<li><a href="admin.cgi?action=settings&session=$session">Configure settings</a></li>
 	</ul>
 END
 
@@ -611,7 +613,7 @@ END
 		foreach my $i (0..9) {
 			my $paper = $assignments[$i];
 			print <<END;
-			<td><input name="$reviewer.$i" type="text" size="1" value="$paper"></td>
+			<td><input name="$reviewer.$i" type="text" size="2" value="$paper"></td>
 END
 			$i++;
 		}
@@ -723,6 +725,109 @@ END
 	Format::endForm("Menu");
 
 	Format::createFooter();
+}
+
+sub handleSettings {
+	my $session = checkCredentials();
+
+	Format::createHeader("Admin > Settings");
+
+	if ($q->param("status") eq "updated") {
+		updateSettings($q->param("param"), $q->param("value"));
+	}
+
+	print <<END;
+	<div id="widebox">
+	<p>Here is what you can change:</p>
+	<ul>
+END
+
+	if ($config->{"submission_open"}) {
+		toggleSettingsParam($session, "submission_open", "Close the submission phase");
+	} else {
+		toggleSettingsParam($session, "submission_open", "Open the submission phase");
+	}
+
+	if ($config->{"screen_open"}) {
+		toggleSettingsParam($session, "screen_open", "Close the initial screening phase");
+	} else {
+		toggleSettingsParam($session, "screen_open", "Open the initial screening phase");
+	}
+
+	if ($config->{"shepherd_submission_open"}) {
+		toggleSettingsParam($session, "shepherd_submission_open", "Close shepherd submissions");
+	} else {
+		toggleSettingsParam($session, "shepherd_submission_open", "Open shepherd submissions");
+	}
+
+	if ($config->{"shepherding_open"}) {
+		toggleSettingsParam($session, "shepherding_open", "Close the shepherding phase");
+	} else {
+		toggleSettingsParam($session, "shepherding_open", "Open the shepherding phase");
+	}
+
+	if ($config->{"pc_can_view_all"}) {
+		toggleSettingsParam($session, "pc_can_view_all", "Only allow PC members to view assigned papers");
+	} else {
+		toggleSettingsParam($session, "pc_can_view_all", "Allow PC members to view all papers");
+	}
+
+	if ($config->{"registration_closed"}) {
+		toggleSettingsParam($session, "registration_closed", "Open registration");
+	} else {
+		toggleSettingsParam($session, "registration_closed", "Close registration");
+	}
+
+	if ($config->{"early_registration_open"}) {
+		toggleSettingsParam($session, "early_registration_open", "Close early registration");
+	} else {
+		toggleSettingsParam($session, "early_registration_open", "Open early registration");
+	}
+
+	if ($config->{"late_registration_open"}) {
+		toggleSettingsParam($session, "late_registration_open", "Close late registration");
+	} else {
+		toggleSettingsParam($session, "late_registration_open", "Open late registration");
+	}
+
+	print <<END;
+	</ul>
+	</div>
+END
+
+	Format::startForm("post", "menu");
+	Format::createHidden("session", $q->param("session"));
+
+	Format::endForm("Menu");
+
+	Format::createFooter();
+}
+
+sub toggleSettingsParam {
+	my ($session, $param, $instructions) = @_;
+#	my $value = $config->{$param} ? 0 : 1;
+	if ($config->{$param}) { # currently on, turn off 
+		print <<END;
+	<li><a href="admin.cgi?action=settings&session=$session&status=updated&param=$param&value=0" style="color: red">$instructions</a></li>
+END
+	} else { # currently off, turn on  
+		print <<END;
+	<li><a href="admin.cgi?action=settings&session=$session&status=updated&param=$param&value=1" style="color: green">$instructions</a></li>
+END
+	}
+}
+
+# to protect against errors, only certain configuration parameters can be updated
+my @settable = ( "submission_open", "screen_open", "shepherd_submission_open", "shepherding_open" );
+
+sub updateSettings {
+	my ($param, $value) = @_;
+	foreach $settable (@settable) {
+		if ($param eq $settable) {
+			Serialize::updateConfig($param, $value);
+			$config->{$param} = $value;
+		}
+	}
 }
 
 sub handleDownload {
@@ -885,6 +990,8 @@ if ($action eq "menu") {
 	handleParticipants();
 } elsif ($action eq "shepherds") {
 	handleShepherds();
+} elsif ($action eq "settings") {
+	handleSettings();
 } else {
 	handleError("No such action");
 }

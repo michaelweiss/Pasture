@@ -54,6 +54,7 @@ sub saveAssignments {
 		return;
 	foreach $reviewer (keys %assignments) {
 		print ASSIGNMENTS "$reviewer";
+		@{$assignments{$reviewer}} = sort { $a <=> $b } @{$assignments{$reviewer}};
 		foreach $paper (@{$assignments{$reviewer}}) {
 			print ASSIGNMENTS ", $paper";
 		}

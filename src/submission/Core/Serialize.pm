@@ -60,9 +60,23 @@ sub setConfig {
 	my $config = shift;
 	open(DATA, ">data/config.dat") ||
 		Audit::handleError("Internal: could not set config");
-	foreach (keys %$config) {
-		print DATA "$_=$config->{$_}\n";
+	foreach $param (sort keys %{$config}) {
+		print DATA "$param=$config->{$param}\n";
 	}
+	close(DATA);
+
+	_unlock("data", "config");	
+}
+
+sub updateConfig {
+	my ($param, $value) = @_;
+
+	_lock("data", "config");
+
+	open(DATA, ">>data/config.dat") ||
+		Audit::handleError("Internal: could not set config");
+	print DATA "\n";
+	print DATA "$param=$value";
 	close(DATA);
 
 	_unlock("data", "config");	

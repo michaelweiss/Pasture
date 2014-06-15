@@ -4,6 +4,8 @@ use CGI::Carp qw( fatalsToBrowser );
 
 use URI::Escape ('uri_escape');
 
+use warnings;
+
 use lib '.';
 use Core::Assert;
 use Core::Format;
@@ -267,7 +269,7 @@ sub handleProfile {
 
 	print <<END;
 <p>Hello, $firstName $lastName. Your account has been created.</p>
-<p>You can now <a href=\"$baseUrl/$script?action=sign_in\">log into the submission system</a>.</p>
+<p>You can now <a href="$baseUrl/$script?action=sign_in">log into the submission system</a>.</p>
 END
 
 	Format::createFooter();
@@ -276,6 +278,11 @@ END
 # Handle update profile requests
 sub handleUpdateProfile {
 	Format::createHeader("Gate > Update profile", "", "js/validate.js");
+
+	print <<END;
+	<p>You will be able to update your profile here.</p>
+END
+
 	Format::createFooter();
 }
 
@@ -457,11 +464,13 @@ sub adminMenu {
 		<li><a href="admin.cgi?action=view_submissions&session=$session">View submissions</a></li>
 		<li><a href="admin.cgi?action=authors&session=$session">View authors</a></li>
 		<li><a href="admin.cgi?action=pc&session=$session">View PC members</a></li>
-    <li><a href="admin.cgi?action=review_status&session=$session">Check review status</a></li>
+    	<li><a href="admin.cgi?action=assignments&role=admin&session=$session">Edit screening assignments</a></li>
+		<li><a href="admin.cgi?action=review_status&session=$session">Check review status</a></li>
 		<li><a href="bids.cgi?session=$session">Assign shepherds (bids)</a></li>
 		<li><a href="admin.cgi?action=shepherds&session=$session">View shepherds</a></li>
 		<li><a href="admin.cgi?action=participants&session=$session">View participants</a></li>
 		<li><a href="admin.cgi?action=participants&session=$session&format=csv">View participants as CSV list</a></li>
+		<li><a href="admin.cgi?action=settings&session=$session&format=csv">Configure settings</a></li>
 	</ul>
 END
 }

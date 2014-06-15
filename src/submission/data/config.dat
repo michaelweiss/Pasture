@@ -1,11 +1,11 @@
 debug=1
 
-conference=EuroPLoP 2012
+conference=EuroPLoP Test
 
-conference_id=europlop2012
-conference_website=http://www.hillside.net/europlop/europlop2012
+conference_id=europlop2014
+conference_website=http://www.hillside.net/europlop/europlop2014
 
-url=http://www.hillside.net/europlop/europlop2012/_submission
+url=http://www.hillside.net/europlop/europlop2014/_submission
 
 program_chair=Alice White
 program_chair_email=alice@example.com
