@@ -51,7 +51,9 @@ if ($config->{"shepherd_submission_open"}) {
 # to be used during last phase of final review to fill in gaps in reviewing
 our $pcCanViewAll = 0;
 if ($config->{"pc_can_view_all"}) {
-	$pcCanViewAll = 1;
+	# only set flag if user is a pc member, otherwise shepherds can vote on all
+	# papers too, which is not what we may want them to do
+	$pcCanViewAll = Role::hasRole($user, $CONFERENCE_ID, "pc");
 }
 
 # remember whether a new account was created

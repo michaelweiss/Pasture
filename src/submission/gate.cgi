@@ -408,6 +408,13 @@ sub authorMenu {
 	<ul>
 END
 
+	print <<END;
+	<!-- SUBMISSION_OPEN = $SUBMISSION_OPEN -->
+	<!-- SHEPHERDING_OPEN = $SHEPHERDING_OPEN -->
+	<!-- SHEPHERD_SUBMISSION_OPEN = $SHEPHERD_SUBMISSION_OPEN -->
+	<!-- REGISTRATION_OPEN = $REGISTRATION_OPEN -->
+END
+
 	# user can submit a paper ...
 	Format::createAction($SUBMISSION_OPEN, $baseUrl . "/submit.cgi?action=submit&session=$session&status=new",
 		"Submit a new paper", "closed");
