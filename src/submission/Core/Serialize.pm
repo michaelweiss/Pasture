@@ -97,7 +97,8 @@ sub loadState {
     # find most recent record for this reference
     # TODO: also want to get a list of records for a reference, and access a specific record by name
     # DONE: can get list of records for a reference already (see next line)
-	@records = grep (/_$reference$/, readdir DIR);
+    # NOTE: need to sort grep results on some platforms (not mac, but apparently linux)
+	@records = sort grep (/_$reference$/, readdir DIR);
     closedir DIR;
     my $name = $records[-1];	# we know there is at least one
 #	print "reading record $name:\n";
