@@ -818,7 +818,10 @@ END
 }
 
 # to protect against errors, only certain configuration parameters can be updated
-my @settable = ( "submission_open", "screen_open", "shepherd_submission_open", "shepherding_open" );
+my @settable = ( "submission_open", "screen_open", 
+	"shepherd_submission_open", "shepherding_open", "pc_can_view_all", 
+	"registration_closed", "early_registration_open", "late_registration_open"
+);
 
 sub updateSettings {
 	my ($param, $value) = @_;
