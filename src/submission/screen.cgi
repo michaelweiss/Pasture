@@ -160,16 +160,10 @@ sub showStatusReferenceTitle {
 
 	print <<END;
 		<tr>
-			<td valign="top" width="35%">
-				$status  
-				(<b><a href="?action=status&update=NA&session=$session&reference=$reference" style="color: green">NA</a></b> |
-				<b><a href="?action=status&update=rejected&session=$session&reference=$reference" style="color: red">rejected</a></b> |
-				<b><a href="?action=status&update=withdrawn&session=$session&reference=$reference" style="color: blue">withdrawn</a></b>)
-			</td>
 			<td valign="top" width="3%"><div align="right">
 				<a href="?token=$token&action=download&label=$label">$reference</a>
 			</td>
-			<td valign="top" with="62%">
+			<td valign="top" with="87%">
 				<p>$title</p>
 			</td>
 		</tr>
@@ -185,11 +179,9 @@ sub showStatus {
 
 	print <<END;
 		<tr>
-			<td valign="top" width="35%">
-			</td>
 			<td valign="top" width="3%">
 			</td>
-			<td valign="top" width="35%">
+			<td valign="top" width="87%">
 				$status  
 				(<b><a href="?action=status&update=NA&session=$session&reference=$reference" style="color: green">NA</a></b> |
 				<b><a href="?action=status&update=rejected&session=$session&reference=$reference" style="color: red">rejected</a></b> |
@@ -424,7 +416,7 @@ sub handleStatus {
 	if ($q->param("update")) {
 		my $status = $q->param("update");
 		my $reference = $q->param("reference");
-		Format::createFreetext("Status of submission $reference changed to $status.");
+		Format::createFreetext("Status of submission $reference changed to <b>$status</b>.");
 		Shepherd::changeStatus($timestamp, $reference, $status);
 	} 
 
