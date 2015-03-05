@@ -16,6 +16,8 @@ use Core::Assert;
 use Core::Screen;
 use Core::Review;
 
+use Core::Shepherd;
+
 our $q = new CGI;
 our $timestamp = time();
 
@@ -141,6 +143,57 @@ sub showReferenceAuthorsEmail {
 			<td valign="top">
 			 	$authors<br/>
 			 	<a href="mailto:$email">$email</a>
+			</td>
+		</tr>
+END
+}
+
+sub showStatusReferenceTitle {
+	my ($session, $record) = @_;
+
+	my $reference = $record->param("reference");
+	my $token = uri_escape(Access::token($label));
+	my $title = $record->param("title");
+
+	my $status = Shepherd::status($reference);
+	$status = "NA" unless ($status);				
+
+	print <<END;
+		<tr>
+			<td valign="top" width="35%">
+				$status  
+				(<b><a href="?action=status&update=NA&session=$session&reference=$reference" style="color: green">NA</a></b> |
+				<b><a href="?action=status&update=rejected&session=$session&reference=$reference" style="color: red">rejected</a></b> |
+				<b><a href="?action=status&update=withdrawn&session=$session&reference=$reference" style="color: blue">withdrawn</a></b>)
+			</td>
+			<td valign="top" width="3%"><div align="right">
+				<a href="?token=$token&action=download&label=$label">$reference</a>
+			</td>
+			<td valign="top" with="62%">
+				<p>$title</p>
+			</td>
+		</tr>
+END
+}
+
+sub showStatus {
+	my ($session, $record) = @_;
+	my $reference = $record->param("reference");
+
+	my $status = Shepherd::status($reference);
+	$status = "NA" unless ($status);				
+
+	print <<END;
+		<tr>
+			<td valign="top" width="35%">
+			</td>
+			<td valign="top" width="3%">
+			</td>
+			<td valign="top" width="35%">
+				$status  
+				(<b><a href="?action=status&update=NA&session=$session&reference=$reference" style="color: green">NA</a></b> |
+				<b><a href="?action=status&update=rejected&session=$session&reference=$reference" style="color: red">rejected</a></b> |
+				<b><a href="?action=status&update=withdrawn&session=$session&reference=$reference" style="color: blue">withdrawn</a></b>)
 			</td>
 		</tr>
 END
@@ -359,6 +412,61 @@ sub handleDownload {
 	}
 }
 
+sub handleStatus {
+	my $session = checkCredentials();
+	my ($user, $role) = Session::getUserRole($session);	
+
+	Assert::assertTrue($role eq "admin", "Need to be logged in as admin");
+
+	Format::createHeader("Screen > Status", "", "js/validate.js");
+	showSharedMenu($session);
+
+	if ($q->param("update")) {
+		my $status = $q->param("update");
+		my $reference = $q->param("reference");
+		Format::createFreetext("Status of submission $reference changed to $status.");
+		Shepherd::changeStatus($timestamp, $reference, $status);
+	} 
+
+	Format::createFreetext("<em>The status of all papers is shown below. To change the status of a paper click on one of the labels below the paper title.</em>");
+	
+	my %records = Records::getAllRecords(Records::listCurrent());
+	foreach $label (
+		sort { $records{$a}->param("track") <=> $records{$b}->param("track") }
+			sort { $records{$a}->param("reference") <=> $records{$b}->param("reference") } 
+				keys %records) {
+		my $record = $records{$label};	
+		if (canSeeRecord($user, $role, $label)) {	
+			showStatusUpdater($session, $user, $record, $label);
+		}
+	} 
+
+	Format::createFooter();
+}
+
+sub showStatusUpdater {
+	my ($session, $user, $record, $label) = @_;
+	
+	my $track = $record->param("track");
+	if ($currentTrack != $track) {
+		Format::createFreetext("<h3>" . $config->{"track_" . $track} . "</h3>");
+		$currentTrack = $track;
+	}
+			
+	print <<END;
+	<table border="0" cellpadding="2" cellspacing="10" width="100%">
+		<tbody>
+END
+	
+	showStatusReferenceTitle($session, $record);
+	showStatus($session, $record);
+	
+	print <<END;
+		</tbody>
+	</table>
+END
+}
+
 sub handleError {
 	my ($error) = @_;
 	# DONE: log errors with error details
@@ -558,6 +666,8 @@ if ($action eq "submissions") {
 	handleSignOut();
 } elsif ($action eq "download") {
 	handleDownload();
+} elsif ($action eq "status") {
+	handleStatus();
 } else {
 	handleError("No such action");
 }
