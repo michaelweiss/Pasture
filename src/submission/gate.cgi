@@ -471,6 +471,7 @@ sub adminMenu {
 		<li><a href="admin.cgi?action=view_submissions&session=$session">View submissions</a></li>
 		<li><a href="admin.cgi?action=authors&session=$session">View authors</a></li>
 		<li><a href="admin.cgi?action=pc&session=$session">View PC members</a></li>
+		<li><a href="screen.cgi?action=status&session=$session">Change submission status</a> (NEW)</li>
     	<li><a href="admin.cgi?action=assignments&role=admin&session=$session">Edit screening assignments</a></li>
 		<li><a href="admin.cgi?action=review_status&session=$session">Check review status</a></li>
 		<li><a href="bids.cgi?session=$session">Assign shepherds (bids)</a></li>
