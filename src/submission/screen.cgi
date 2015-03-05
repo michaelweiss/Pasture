@@ -182,10 +182,22 @@ sub showStatus {
 			<td valign="top" width="3%">
 			</td>
 			<td valign="top" width="87%">
-				$status  
-				(<b><a href="?action=status&update=NA&session=$session&reference=$reference" style="color: green">NA</a></b> |
-				<b><a href="?action=status&update=rejected&session=$session&reference=$reference" style="color: red">rejected</a></b> |
-				<b><a href="?action=status&update=withdrawn&session=$session&reference=$reference" style="color: blue">withdrawn</a></b>)
+				<em>$status</em>
+				(change to:
+END
+
+	print <<END unless ($status eq "rejected");
+					<em><a href="?action=status&update=rejected&session=$session&reference=$reference" style="color: red">rejected</a></em>
+END
+	print <<END unless ($status eq "withdrawn");
+					<em><a href="?action=status&update=withdrawn&session=$session&reference=$reference" style="color: blue">withdrawn</a></em>
+END
+	print <<END unless ($status eq "NA");
+					<em><a href="?action=status&update=NA&session=$session&reference=$reference" style="color: green">NA</a></em>
+END
+
+	print <<END;
+				)
 			</td>
 		</tr>
 END
@@ -416,12 +428,17 @@ sub handleStatus {
 	if ($q->param("update")) {
 		my $status = $q->param("update");
 		my $reference = $q->param("reference");
-		Format::createFreetext("Status of submission $reference changed to <b>$status</b>.");
+		Format::createFreetext("The status of submission $reference has been changed to <em>$status</em>.");
 		Shepherd::changeStatus($timestamp, $reference, $status);
 	} 
 
-	Format::createFreetext("<em>The status of all papers is shown below. To change the status of a paper click on one of the labels below the paper title.</em>");
-	
+	print <<END;
+	<p>
+	<em>The status of all papers is shown below. To change the status of a paper click on one of the labels below the paper title.</em><br>
+	<em>Note: <b>No</b> email is sent to the authors when you change the status of a submission.</em>
+	</p>
+END
+
 	my %records = Records::getAllRecords(Records::listCurrent());
 	foreach $label (
 		sort { $records{$a}->param("track") <=> $records{$b}->param("track") }
