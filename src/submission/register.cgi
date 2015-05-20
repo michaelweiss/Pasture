@@ -178,6 +178,15 @@ END
 		"8", "8",
 		"9", "9",
 		$q_saved->param("vegetarian") || "0");
+
+	# TODO: tshirt size
+	Format::createMenuWithTitle("",
+		"T-shirt size", "tshirt_size",
+		"S", "Small",
+		"M", "Medium",
+		"L", "Large", 
+		"XL", "Extra Large",
+		$q_saved->param("tshirt_size") || "L");
 		
 	# TODO: get actual fee from Allan
 	# TODO: make date of early bird configurable
