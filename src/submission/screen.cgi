@@ -97,7 +97,7 @@ sub showSubmissionsInstructions {
 	<h4>Instructions</h4>
 	<ul>
 		<li>Click on the number next to the author name to download the paper.</li>
-		<li>Click on the <img border="0" src="$baseUrl/images/comment.png"/> icon to submit your review for a paper.</li>
+		<li>Click on the "Vote" button to submit your review for a paper.</li>
 	</ul>
 END
 }
@@ -257,7 +257,7 @@ sub showVoteForm {
 				<input type="hidden" name="authors" value="$authors"/>
 				<input type="hidden" name="title" value="$title"/>
 				<font color="$color">
-				<input type="image" src="$baseUrl/images/comment.png"/> $numberOfVotes votes ($userVote) 
+				<input type="submit" value="Vote"> <img src="$baseUrl/images/comment.png"/> $numberOfVotes votes ($userVote) 
 				&nbsp; | &nbsp;
 				<image border="0" src="$baseUrl/images/vote.png"/></a>&nbsp; $averageVote pre-sheperding vote &nbsp; (1:it's a joy, 2:good ideas, 3:strong shepherd needed, 4:high risk)
 				</font>
@@ -265,6 +265,9 @@ sub showVoteForm {
 			</td>
 		</tr>
 END
+
+# seems that <input type="image" ...> is not working in all browsers
+# had to replace it with <input type="submit" value="vote">
 }
 
 # handle request to enter a vote
