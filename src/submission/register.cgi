@@ -63,6 +63,7 @@ END
 	# DONE: retrieve saved state only when user is properly logged in
 	# otherwise they could access a profile with email only
 	my $q_saved = new CGI();
+	# Register::loadRegistration($user, $q_saved);
 				
 	unless ($q_saved->param("name")) {
 		$q_saved->param("name" => $profile{"firstName"} . " " . $profile{"lastName"});
@@ -551,6 +552,7 @@ END
 	my $participants = $q->param("participants");
 	my $children = $q->param("children");
 	my $vegetarian = $q->param("vegetarian");
+	my $tshirt_size = $q->param("tshirt_size");
 	
 	my $nameOnCard = $q->param("name_on_card");
 	my $cardType = $q->param("card_type");
@@ -581,6 +583,8 @@ END
 	
 	print MAIL <<END;
 We have registered vegetarian meals for $vegetarian participant(s).
+
+T-shirt size: $tshirt_size.
 
 Additional notes: $comments
 
@@ -663,6 +667,7 @@ END
 	my $participants = $q->param("participants");
 	my $children = $q->param("children");
 	my $vegetarian = $q->param("vegetarian");
+	my $tshirt_size = $q->param("tshirt_size");
 	
 	my $nameOnCard = $q->param("name_on_card");
 	my $cardType = $q->param("card_type");
@@ -693,6 +698,8 @@ END
 	
 	print MAIL <<END;
 We have registered vegetarian meals for $vegetarian participant(s).
+
+T-shirt size: $tshirt_size.
 
 Additional notes: $comments
 
