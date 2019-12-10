@@ -223,7 +223,7 @@ END
 						$tags = ", \"$tags\"";
 					}
 					print <<END;
-$referenceAndVersion, "$authors", "$title"$tags<br/>
+$referenceAndVersion, "$authors", "$title", "$tags"<br/>
 END
 				}
 			}
