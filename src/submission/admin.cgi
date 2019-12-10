@@ -754,6 +754,12 @@ END
 		toggleSettingsParam($session, "screen_open", "Open the initial screening phase");
 	}
 
+	if ($config->{"pc_can_screen_all"}) {
+		toggleSettingsParam($session, "pc_can_screen_all", "Only allow PC members to screen assigned papers");
+	} else {
+		toggleSettingsParam($session, "pc_can_screen_all", "Allow PC members to screen all papers");
+	}
+
 	if ($config->{"shepherd_submission_open"}) {
 		toggleSettingsParam($session, "shepherd_submission_open", "Close shepherd submissions");
 	} else {
@@ -818,9 +824,8 @@ END
 }
 
 # to protect against errors, only certain configuration parameters can be updated
-my @settable = ( "submission_open", "screen_open", 
-	"shepherd_submission_open", "shepherding_open", "pc_can_view_all", 
-	"registration_closed", "early_registration_open", "late_registration_open"
+my @settable = ( "submission_open", "screen_open", "pc_can_screen_all", "shepherd_submission_open", "shepherding_open",
+	"pc_can_view_all", "registration_closed", "early_registration_open", "late_registration_open"
 );
 
 sub updateSettings {
