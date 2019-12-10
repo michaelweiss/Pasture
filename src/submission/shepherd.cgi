@@ -619,6 +619,9 @@ sub handleDownload {
 		} elsif ($type eq "txt") {	# 09-02-12 mw can download .txt files now
 			print $::q->header(-type => "text/plain",
 				-attachment => $fileName);
+		} elsif ($type eq "zip") {	# 09-09-19 mw can download .zip files now
+			print $::q->header(-type => "application/zip",
+				-attachment => $fileName);
 		} else {
 			Audit::handleError("file type not supported");
 		}
