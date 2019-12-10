@@ -5,7 +5,7 @@ use Core::Serialize;
 
 my $UPLOAD_DIR = "papers";				# TODO: move to a "safe" location
 
-$CGI::POST_MAX = 10 * 1024 * 1024;		# Limit uploads to 10 MB
+$CGI::POST_MAX = 20 * 1024 * 1024;		# Limit uploads to 20 MB
 
 my $MAX_DIR_SIZE = 250 * 1024 * 1024;	# Maximum upload directory size. Limit total uploads to 250 MB
 my $MAX_OPEN_TRIES = 100;				# Number of times we attempt create a unique filename
@@ -33,8 +33,9 @@ sub save {
 	$path =~ /(\.\w+)$/ || ::handleError("Bad file extension");
 	my $fileExtension = $1;	
 	unless ($fileExtension eq ".doc" || $fileExtension eq ".docx" || $fileExtension eq ".pdf" ||
-		$fileExtension eq ".txt") {		# 09-02-12 mw added support for .txt files
-		::handleError("Can only upload PDF, Word or text documents: " . $path);
+		$fileExtension eq ".txt" ||		# 09-02-12 mw added support for .txt files
+		$fileExtension eq ".zip") {		# 09-05-19 mw added support for .zip files
+		::handleError("Can only upload PDF, Word, and text documents or ZIP files: " . $path);
 	}
 
 #	print "<p>path: $path</p>";
