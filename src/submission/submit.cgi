@@ -11,7 +11,7 @@ use Core::Format;
 use Core::Upload;
 use Core::Serialize;
 use Core::Serialize::Records;
-use Core::Email;
+use Core::Email2;
 use Core::Session;
 use Core::Password;
 use Core::Access;
@@ -544,7 +544,7 @@ sub sendSubmissionConfirmation {
 	my $trackChairEmail = $config->{"track_${track}_chair_email"};
 
 	my ($sanitizedName) = $name	=~ m/([\w\s-]*)/;	
-	my $tmpFileName = Email::tmpFileName($timestamp, $sanitizedName);
+	my $tmpFileName = Email2::tmpFileName($timestamp, $sanitizedName);
 	open (MAIL, ">$tmpFileName") || 
 		Audit::handleError("Cannot create temporary file");
 
@@ -575,7 +575,7 @@ $CONFERENCE Conference Chairs
 END
 	}
 	close (MAIL);
-	my $mail_status = Email::send($contact_email, "$trackChairEmail",
+	my $mail_status = Email2::send($contact_email, "$trackChairEmail",
 		"[$CONFERENCE] Submission $reference received", 
 		$tmpFileName, 1);
 	return $mail_status;
@@ -599,7 +599,7 @@ sub notifyChairsOfSubmission {
 	# temporary file name is PROGRAM_CHAIR name plus "_" to cover the
 	# particular case that the chair submits a paper
 	my ($sanitizedName) = $PROGRAM_CHAIR =~ m/([\w\s-]*)/;	
-	my $tmpFileName = Email::tmpFileName($timestamp, $sanitizedName . "_");
+	my $tmpFileName = Email2::tmpFileName($timestamp, $sanitizedName . "_");
 	open (MAIL, ">$tmpFileName") || 
 	Audit::handleError("Cannot create temporary file");
 
@@ -629,7 +629,7 @@ File: $baseUrl/shepherd.cgi?token=$token&action=download&label=$label
 END
 	}
 	close (MAIL);
-	$mail_status = Email::send($PROGRAM_CHAIR_EMAIL, $trackChairEmail . $shepherdAndPcEmails, 
+	$mail_status = Email2::send($PROGRAM_CHAIR_EMAIL, $trackChairEmail . $shepherdAndPcEmails, 
 		"[$CONFERENCE] $status submission $reference received", 
 		$tmpFileName, 0);
 	return $mail_status;
@@ -665,7 +665,7 @@ sub sendPasswordForReference {
 	
 	# create temporary file
 	my ($sanitizedName) = $name	=~ m/([\w\s-]*)/;	
-	my $tmpFileName = Email::tmpFileName($timestamp, $sanitizedName);
+	my $tmpFileName = Email2::tmpFileName($timestamp, $sanitizedName);
 	my ($firstName) = $sanitizedName =~ /^(\w+)/;
 
 	my $password = Password::retrievePassword($reference);
@@ -680,7 +680,7 @@ $WEB_CHAIR
 $CONFERENCE Web Chair
 END
 	close (MAIL);
-	my $status = Email::send($email, "",
+	my $status = Email2::send($email, "",
 		"[$CONFERENCE] Recovered password for submission $reference", 
 		$tmpFileName, 0);
 	return $status;

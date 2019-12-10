@@ -1,3 +1,5 @@
+# This module is deprecated, use Email2 instead.
+
 package Email;
 
 use LWP;
