@@ -1,5 +1,7 @@
 package Session;
 
+use Core::Audit;
+
 sub uniqueId {
 	# Return a unique id (using Apache's mod_unique_id module)
 	my $uniqueId = $ENV{UNIQUE_ID};
@@ -19,7 +21,7 @@ sub create {
 	_lock("data", "sessions");
 	my %sessions;
 	dbmopen(%sessions, "data/sessions", 0666) ||
-		::handleError("Internal: cannot open session database");
+		Audit::handleError("Internal: cannot open session database");
 	$sessions{$session} = $timestamp;
 	_unlock("data", "sessions");
 	return $session;
@@ -31,7 +33,7 @@ sub setUser {
 	_lock("data", "sessions");
 	my %sessions;
 	dbmopen(%sessions, "data/sessions", 0666) ||
-		::handleError("Internal: cannot open session database");
+		Audit::handleError("Internal: cannot open session database");
 		
 	# if user and role already set, strip from session
 	$sessions{$session} =~ s/:.+//;
@@ -64,7 +66,7 @@ sub check {
 	_lock("data", "sessions");
 	my %sessions;
 	dbmopen(%sessions, "data/sessions", 0666) ||
-		::handleError("Internal: cannot open session database");
+		Audit::handleError("Internal: cannot open session database");
 	my $timestamp = $sessions{$session};
 	_unlock("data", "sessions");
 #	if ($timeout > 0) {
@@ -81,7 +83,7 @@ sub invalidate {
 	_lock("data", "sessions");
 	my %sessions;
 	dbmopen(%sessions, "data/sessions", 0666) ||
-		::handleError("Internal: cannot open session database");
+		Audit::handleError("Internal: cannot open session database");
 	delete $sessions{$session};
 	_unlock("data", "sessions");
 }
@@ -91,7 +93,7 @@ sub sessions {
 	_lock("data", "sessions");
 	my %sessions;
 	dbmopen(%sessions, "data/sessions", 0666) ||
-		::handleError("Internal: cannot open session database");
+		Audit::handleError("Internal: cannot open session database");
 	my @keys = keys %sessions;
 	_unlock("data", "sessions");
 	return @keys;
