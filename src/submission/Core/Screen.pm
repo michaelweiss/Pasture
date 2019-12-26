@@ -13,7 +13,8 @@ unless (-e "data/screen") {
 
 sub saveVote {
 	my ($timestamp, $user, $reference, $vote, $reason) = @_;
-	$reason =~ s/\n/ /g;
+	# encode newlines into the special sequence %%%
+	$reason =~ s/\n/%%%/g;
 	Lock::lock("data/screen", "votes");
 	open(LOG, ">>data/screen/votes.dat") ||
 		::handleError("Could not save vote");
@@ -39,6 +40,8 @@ sub votes {
 				/^(\d+?):(.+?):(\d+?):(\d?):(.*)/;
 			$votes->{$reference}->{$user}->{"vote"} = $vote;
 			$votes->{$reference}->{$user}->{"reason"} = Format::trim($reason);
+			# decode the special sequence %%% into a newline
+			$votes->{$reference}->{$user}->{"reason"} =~ s/%%%/\n/g;
 		} else {
 			# this works since we are in control of the file format
 			$votes->{$reference}->{$user}->{"reason"} .= 
@@ -68,6 +71,8 @@ sub getReviews {
 			if ($reference eq $_reference) {
 				$reviews->{$user}->{"vote"} = $vote;
 				$reviews->{$user}->{"reason"} = Format::trim($reason);
+				# decode the special sequence %%% into a newline
+				$reviews->{$user}->{"reason"} =~ s/%%%/\n/g;
 			}
 		} else {
 			$reviews->{$user}->{"reason"} .= 

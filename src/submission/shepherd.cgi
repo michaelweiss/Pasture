@@ -945,6 +945,8 @@ END
 		my $reviewRole = $review->{"review_role"};
 		my $vote = $review->{"vote"};
 		my $decision = voteDecisionToText($vote);
+		my $formattedReason = $review->{"reason"};
+		$formattedReason =~ s/\n/<br\/>/g;
 		print <<END;
 	<tr>
 		<td width="100" valign="top">$reviewRole:<br/>
@@ -956,7 +958,7 @@ END
 		</td>
 		<td width="30">&nbsp;</td>
 		<td valign="top"><b>$decision</b><br/>
-		$review->{"reason"}<br/><br/></td>
+		$formattedReason<br/><br/></td>
 	</tr>
 END
 		$i++;
@@ -1493,6 +1495,8 @@ END
 		my $reviewRole = $review->{"review_role"};
 		my $vote = $review->{"vote"};
 		my $decision = voteDecisionToText($vote);
+		my $formattedReason = $review->{"reason"};
+		$formattedReason =~ s/\n/<br\/>/g;
 		$text .= <<END;
 	<tr>
 		<td width="175" valign="top">$reviewRole:<br/>
@@ -1504,7 +1508,7 @@ END
 		</td>
 		<td width="30">&nbsp;</td>
 		<td valign="top"><b>$decision</b><br/>
-		$review->{"reason"}<br/><br/></td>
+		$formattedReason<br/><br/></td>
 	</tr>
 END
 		$i++;

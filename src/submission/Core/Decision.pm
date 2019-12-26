@@ -57,7 +57,9 @@ Save vote.
 
 sub saveVote {
 	my ($timestamp, $user, $reviewRole, $reference, $vote, $reason) = @_;
-	$reason =~ s/\n/ /g;		# remove newlines
+	# encode newlines into the special sequence %%%
+	$reason =~ s/\n/%%%/g;
+	# also consider these special cases:
 	$reason =~ s/\r//g;	 		# this caused some reasons to be multi-line in Screen.pm
 	$reason =~ s/:/&#58;/g;		# colon used to separate fields, must escape
 	_lock("data/decision", "votes");
@@ -87,6 +89,8 @@ sub getReviews {
 		if ($reference eq $_reference) {
 			$reviews->{$user}->{"vote"} = $vote;
 			$reviews->{$user}->{"reason"} = Format::trim($reason);
+			# decode the special sequence %%% into a newline
+			$reviews->{$user}->{"reason"} =~ s/%%%/\n/g;
 			$reviews->{$user}->{"review_role"} = $review_role;
 		}
 	}
@@ -112,6 +116,8 @@ sub votes {
 		my ($timestamp, $user, $review_role, $reference, $vote, $reason) = split(/:/);
 		$votes->{$reference}->{$user}->{"vote"} = $vote;
 		$votes->{$reference}->{$user}->{"reason"} = Format::trim($reason);
+		# decode the special sequence %%% into a newline
+		$votes->{$reference}->{$user}->{"reason"} =~ s/%%%/\n/g;
 		$votes->{$reference}->{$user}->{"review_role"} = $review_role;
 	}
 	close(LOG);

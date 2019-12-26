@@ -301,6 +301,7 @@ END
 END
 	}
 	my $you = "0";
+	my $reason = "";
 	my $i = 1;
 	my $j = $i-1;
 	foreach $reviewer (@reviewers) {
@@ -321,11 +322,14 @@ END
 		# remember user's vote
 		if ($reviewers[$j] eq $user) {
 			$you = $review->{"vote"};
+			$reason = $review->{"reason"};
 		}
+		my $formattedReason = $review->{"reason"};
+		$formattedReason =~ s/\n/<br\/>/g;
 		print <<END;
 		</td>
 		<td valign="top">Vote: <b>$review->{"vote"}</b><br/>
-		$review->{"reason"}<br/><br/></td>
+		$formattedReason<br/><br/></td>
 	</tr>
 END
 		$i++;
