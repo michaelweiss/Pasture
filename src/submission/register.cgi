@@ -9,7 +9,7 @@ use lib '.';
 use Core::Format;
 use Core::Serialize;
 use Core::Serialize::Records;
-use Core::Email;
+use Core::Email2;
 use Core::Session;
 use Core::Password;
 use Core::Access;
@@ -488,7 +488,7 @@ sub NOT_USED_sendNewAccountInformation {
 	my ($firstName) = $name =~ /^(\w+)/;
 
 	# DONE: send email to participant with and password
-	my $tmpFileName = Email::tmpFileName($timestamp, $firstName);
+	my $tmpFileName = Email2::tmpFileName($timestamp, $firstName);
 	open (MAIL, ">$tmpFileName");
 	print MAIL <<END;
 We have created a new account for you. The user name is your mail address and the password is $password. You can log in and update your information any time.
@@ -500,7 +500,7 @@ END
 	close (MAIL);
 	
 	# TODO: during initial test, don't actually send mail
-	my $mail = Email::send($email, "",
+	my $mail = Email2::send($email, "",
 		"[$CONFERENCE] New account", $tmpFileName);
 	if ($debug) {
 		print "<hr/><pre>$mail</pre>\n";
@@ -514,7 +514,7 @@ sub sendConfirmationOfRegistration {
 	my ($firstName) = $name =~ /^(\w+)/;
 
 	# DONE: send email to participant with registration info
-	my $tmpFileName = Email::tmpFileName($timestamp, $firstName);
+	my $tmpFileName = Email2::tmpFileName($timestamp, $firstName);
 	open (MAIL, ">$tmpFileName");
 	print MAIL <<END;
 Dear $firstName,
@@ -612,7 +612,7 @@ END
 	close (MAIL);
 	
 	# TODO: during initial test, don't actually send mail
-	my $mail = Email::send($email, "",
+	my $mail = Email2::send($email, "",
 		"[$CONFERENCE] Registration confirmation", $tmpFileName);
 	if ($debug) {
 		print "<hr/><pre>$mail</pre>\n";
@@ -624,7 +624,7 @@ END
 sub notifyRegistration {
 	my ($email, $name) = @_;
 	# TODO: get conference chair's name
-	my $tmpFileName = Email::tmpFileName($timestamp, "Michael");
+	my $tmpFileName = Email2::tmpFileName($timestamp, "Michael");
 	open (MAIL, ">$tmpFileName");
 		
 	print MAIL <<END;
@@ -714,7 +714,7 @@ END
 	my $chair_email = "$config->{conference_chair_email},$config->{program_chair_email}";
 	
 	# TODO: disable during initial testing
-	my $mail = Email::send($chair_email, "",
+	my $mail = Email2::send($chair_email, "",
 		"[$CONFERENCE] Registration", $tmpFileName);
 	if ($debug) {
 		print "<hr/><pre>$mail</pre>\n";
@@ -730,7 +730,7 @@ sub sendForgottenPassword {
 	}
 
 	# DONE: send email to participant with and password
-	my $tmpFileName = Email::tmpFileName($timestamp, $firstName);
+	my $tmpFileName = Email2::tmpFileName($timestamp, $firstName);
 	open (MAIL, ">$tmpFileName");
 	print MAIL <<END;
 We have retrieved your password. You can login using:
@@ -746,7 +746,7 @@ END
 	close (MAIL);
 	
 	# TODO: during initial test, don't actually send mail
-	my $mail = Email::send($email, "",
+	my $mail = Email2::send($email, "",
 		"[$CONFERENCE] Forgotten password", $tmpFileName);
 	if ($debug) {
 		print "<hr/><pre>$mail</pre>\n";

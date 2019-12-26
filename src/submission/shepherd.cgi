@@ -8,7 +8,7 @@ use lib '.';
 use Core::Format;
 use Core::Serialize;
 use Core::Serialize::Records;
-use Core::Email;
+use Core::Email2;
 use Core::Session;
 use Core::Password;
 use Core::Access;
@@ -1167,7 +1167,7 @@ sub sendConfirmationOfSherpherdingBid {
 
 	# DONE: send email to bidder with bids and password
 	my ($sanitizedName) = $firstName =~ m/([\w\s-]*)/;
-	my $tmpFileName = Email::tmpFileName($timestamp, $sanitizedName);
+	my $tmpFileName = Email2::tmpFileName($timestamp, $sanitizedName);
 	open (MAIL, ">$tmpFileName");
 	print MAIL <<END;
 Dear $firstName,
@@ -1201,7 +1201,7 @@ $CONFERENCE $PROGRAM_CHAIR_TITLE
 END
 	close (MAIL);
 
-	my $status = Email::send($email, "",
+	my $status = Email2::send($email, "",
 		"[$CONFERENCE] Shepherding bid confirmation", $tmpFileName);
 	if ($config->{"debug"}) {
 		print "Email: <pre>$status</pre>";
@@ -1212,7 +1212,7 @@ END
 # Reminder to $PROGRAM_CHAIR_TITLE
 sub notifyShepherdingBid {
 	my ($shepherd, $email, $papers) = @_;
-	my $tmpFileName = Email::tmpFileName($timestamp, "Chair");
+	my $tmpFileName = Email2::tmpFileName($timestamp, "Chair");
 	open (MAIL, ">$tmpFileName");
 	print MAIL <<END;
 $shepherd ($email) has volunteered to shepherd the following paper(s):
@@ -1227,7 +1227,7 @@ END
 	close (MAIL);
 
 	my $chair_email = $config->{"program_chair_email"};
-	my $status = Email::send($chair_email, "",
+	my $status = Email2::send($chair_email, "",
 		"[$CONFERENCE] New shepherding bid", $tmpFileName);
 	if ($config->{"debug"}) {
 		print "Email: <pre>$status</pre>";
@@ -1252,7 +1252,7 @@ sub rejectBid {
 	my $assigned_shepherd_name = Review::getReviewerName($assignment{"shepherd"});
 	my ($firstName) = $shepherd_name =~ /^(\w+)/;
 
-	my $tmpFileName = Email::tmpFileName($timestamp, $firstName);
+	my $tmpFileName = Email2::tmpFileName($timestamp, $firstName);
 	open (MAIL, ">$tmpFileName");
 	print MAIL <<END;
 Dear $firstName,
@@ -1275,7 +1275,7 @@ $CONFERENCE $PROGRAM_CHAIR_TITLE
 END
 	close (MAIL);
 
- 	my $status = Email::send($shepherd_email, "",
+ 	my $status = Email2::send($shepherd_email, "",
 		"[$CONFERENCE] Paper not available for shepherding", $tmpFileName);
 	if ($config->{"debug"}) {
 		print "Email: <pre>$status</pre>";
@@ -1300,7 +1300,7 @@ sub confirmBid {
 	my $pc_email = Review::getReviewerEmail($pc);
 	my $pc_name = Review::getReviewerName($pc);
 
-	my $tmpFileName = Email::tmpFileName($timestamp, $firstName);
+	my $tmpFileName = Email2::tmpFileName($timestamp, $firstName);
 	open (MAIL, ">$tmpFileName");
 	print MAIL <<END;
 Dear $firstName,
@@ -1319,7 +1319,7 @@ $CONFERENCE $PROGRAM_CHAIR_TITLE
 END
 	close (MAIL);
 
-	my $status = Email::send($shepherd_email, "$pc_email",
+	my $status = Email2::send($shepherd_email, "$pc_email",
 		"[$CONFERENCE] Paper assigned for shepherding ($reference)", $tmpFileName);
 	if ($config->{"debug"}) {
 		print "Email: <pre>$status</pre>";
@@ -1348,7 +1348,7 @@ sub introduceSheepToShepherd {
 	my ($firstName) = $sheep_name =~ /^([^\s]+)/;
 	my $password = getSubmitPassword($reference);
 
-	my $tmpFileName = Email::tmpFileName($timestamp, $firstName);
+	my $tmpFileName = Email2::tmpFileName($timestamp, $firstName);
 	open (MAIL, ">$tmpFileName");
 	print MAIL <<END;
 Dear $firstName,
@@ -1371,7 +1371,7 @@ END
 	close (MAIL);
 
 	# TODO: send to sheep, and cc to shepherd and pc member
-	my $status = Email::send($sheep_email, "$shepherd_email,$pc_email",
+	my $status = Email2::send($sheep_email, "$shepherd_email,$pc_email",
 		"[$CONFERENCE] Paper accepted for shepherding ($reference)", $tmpFileName);
 	if ($config->{"debug"}) {
 		print "Email: <pre>$status</pre>";

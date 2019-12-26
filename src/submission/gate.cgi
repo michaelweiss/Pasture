@@ -12,7 +12,7 @@ use Core::Format;
 use Core::Upload;
 use Core::Serialize;
 use Core::Serialize::Records;
-use Core::Email;
+use Core::Email2;
 use Core::Session;
 use Core::Password;
 use Core::Access;
@@ -563,7 +563,7 @@ sub sendResetPasswordToken {
 
 	# create temporary file
 	my ($sanitizedName) = $name	=~ m/([\w\s-]*)/;
-	my $tmpFileName = Email::tmpFileName($timestamp, $sanitizedName);
+	my $tmpFileName = Email2::tmpFileName($timestamp, $sanitizedName);
 
 	my $token = uri_escape(Access::token($user));
 	open (MAIL, ">$tmpFileName") ||
@@ -580,7 +580,7 @@ $WEB_CHAIR
 $CONFERENCE Web Chair
 END
 	close (MAIL);
-	my $status = Email::send($email, "",
+	my $status = Email2::send($email, "",
 		"[$CONFERENCE] Request to reset password",
 		$tmpFileName, 0);
 	return $status;

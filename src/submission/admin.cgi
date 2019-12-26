@@ -9,7 +9,6 @@ use Core::Audit;
 use Core::Format;
 use Core::Serialize;
 use Core::Serialize::Records;
-use Core::Email;
 use Core::Session;
 use Core::Password;
 use Core::Access;
