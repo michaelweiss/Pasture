@@ -366,11 +366,57 @@ END
 		"4", "high risk",
 		$you);
 		# $q_saved->param("vote") || "1");
+
+	my $template = template($reason);
 	Format::createTextBoxWithTitle("Reason", 
-		"Why did you vote like that? (will be stored even if you are not ready to assess)", "reason", 70, 5);
+		"Why did you vote like that? (this will be stored even if you are not ready to assess)"
+		. instructionsForTemplate(), 
+		"reason", 70, 10, $template);
 
 	Format::endForm("Vote");	# TODO: should do something else than go to sign-in
 	Format::createFooter();
+}
+
+# Returns either a template text or the existing reason
+sub template {
+	my ($reason) = @_;
+	my $template = "";
+	if ($reason eq "") {
+		$template = <<"END";
+A. Rate the maturity of the paper
+
+B. Rate the relevance of the topic to $CONFERENCE
+
+C. Rate the suitability for ACM
+
+D. Explain your ratings above
+END
+	} else {
+		$template = $reason;
+	}
+	return $template;
+}
+
+sub instructionsForTemplate {
+	my $instructions = <<"END";
+	<div>
+<br/><em>
+A. Rate the maturity of the paper on a scale from 1-5<br/>
+1 The paper only consists of an abstract and many TODO sections<br/>
+5 The paper is complete and mature: no TODO sections, no important sections missing, patterns are well elaborated<br/>
+<br/>
+B. Rate the relevance of the topic to $CONFERENCE on a scale from 1-5<br/>
+1 The paper has nothing to do with patterns, or it appears to be some scientific paper written in pattern format<br/>
+5 The paper contains many connecting patterns or connects to existing patterns, covers a meta-pattern topic, or the application of existing patterns<br/>
+<br/>
+C. Rate the suitability for ACM on a scale from 1-5<br/>
+1 If ACM knew we were going to publish this paper in the digital library, we would never be able to publish with them again<br/>
+5 The topic is highly relevant for ACM (related to computer science)
+</em><br/><br/>
+	</div>
+END
+	return $instructions;
+	# Format::createFreetext($instructions);
 }
 
 sub handleSignOut {
