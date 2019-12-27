@@ -86,6 +86,18 @@ sub handleSignIn {
 	</table>
 END
 
+		print <<END;
+	<p>Before you can use this site, GDPR compliance requires you to agree to our 
+		<a target="_blank" href="https://docs.google.com/document/d/1PVsyep94_9TpPfrehMkKOUYAX3ZaR7fCQAP6l7squlk/view">privacy policy</a>.</p>
+	<table>
+		<tr>
+			<td><input name="privacy" type="checkbox"/></td>
+			<td width="10"></td>
+			<td>I agree to the privacy policy</td>
+		</tr>
+	</table>
+END
+
 		Format::endForm("Sign in");
 
 		Format::createFreetext(
@@ -114,9 +126,11 @@ sub handleMenu {
 	my $session = $q->param("session");
 	my ($user, $role) = Session::getUserRole($session);
 
+	Assert::assertNotEmpty("privacy", "You need to agree to the privacy policy");
+
 	unless ($user && $role) {
-		Assert::assertNotEmpty("user", "Need to enter a user name");
-		Assert::assertNotEmpty("password", "Need to enter a password");
+		Assert::assertNotEmpty("user", "You need to enter a user name");
+		Assert::assertNotEmpty("password", "You need to enter a password");
 
 		# convert user name to lower case
 		$user = lc($q->param("user"));
