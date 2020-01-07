@@ -132,17 +132,15 @@ sub handleMenu {
 		Session::setUser($session, $user, $role);
 	}
 
+	if (! Terms::hasAgreedToTerms($user, "privacy")) {
+		# redirect to handle privacy_policy request
+		print $q->redirect(-uri => "$baseUrl/$script?action=privacy_policy&session=$session");
+	}
+
 	my %profile = User::loadUser($user);
 	my %contact = Contact::loadContact($user);
 
 	Format::createHeader("Gate > Menu");
-
-	if ($debug) {
-		my $privacy = Terms::hasAgreedToTerms($user, "privacy");
-		print <<END;
-<p>User ($user) has agreed to the privacy policy: $privacy</p>
-END
-	}
 
 	print <<END;
 <p>Dear $profile{"firstName"}, you are logged into the <a href="$CONFERENCE_WEBSITE">$CONFERENCE</a> submission site as <b>$role</b>.</p>
@@ -240,6 +238,7 @@ sub handleProfile {
 	my $user, $firstName, $lastName;
 	my $email, $affiliation, $country;
 	my $password, $passwordConfirmed;
+	my $privacy;
 
 	Assert::assertNotEmpty("user", "Need to enter a user name");
 	Assert::assertNotEmpty("firstName", "Need to enter your first name");
@@ -419,6 +418,57 @@ sub checkPassword {
 	if (Password::checkUserPassword($user, $password)) {
 		return "author";
 	}
+}
+
+sub handlePrivacyPolicy {
+	my $session = $q->param("session");
+	my ($user, $role) = Session::getUserRole($session);
+
+	Assert::assertTrue($role, "Need to log in first");
+
+	my %profile = User::loadUser($user);
+
+	Format::createHeader("Gate > Privacy Policy", "", "js/validate.js");
+
+	print <<END;
+	<p>Howdy, $profile{"firstName"}. We have updated our website to include a privacy policy.</p>
+END
+
+	print <<END;
+	<div id="widebox">
+END
+
+	Format::startForm("post", "update_privacy_policy");
+	Format::createHidden("session", $session);
+
+	privacyPolicy();
+
+	Format::endForm("Submit");
+
+	print <<END;
+	</div>
+END
+
+	Format::createFooter();
+}
+
+sub handleUpdatePrivacyPolicy {
+	my $session = $q->param("session");
+	my ($user, $role) = Session::getUserRole($session);
+	my $privacy = $::q->param("privacy");
+
+	Assert::assertTrue($role, "Need to log in first");	
+
+	# check whether user has agreed to the privacy policy
+	Assert::assertTrue($privacy eq "yes", 
+		"To use this site, you need to agree to the privacy policy");
+
+	# save the terms first, because we do not want to create a user, unless saving
+	# the terms succeeds (however unlikely, unless there is a database issue)
+	Terms::addTerms($user, "privacy");
+
+	# redirect to handle menu request
+	print $q->redirect(-uri => "$baseUrl/$script?action=menu&session=$session");
 }
 
 # Menus
@@ -647,6 +697,10 @@ if ($action eq "sign_in") {
 	handlePassword();
 } elsif ($action eq "change_password") {
 	handleChangePassword();
+} elsif ($action eq "privacy_policy") {
+	handlePrivacyPolicy();
+} elsif ($action eq "update_privacy_policy") {
+	handleUpdatePrivacyPolicy();
 } else {
 	Audit::handleError("No such action");
 }
