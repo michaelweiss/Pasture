@@ -20,6 +20,7 @@ use Core::Shepherd;
 use Core::Review;
 use Core::User;
 use Core::Contact;
+use Core::Terms;
 use Core::Submission;
 use Core::Role;
 use Core::Audit;
@@ -40,6 +41,8 @@ our $SCREEN_OPEN = $config->{"screen_open"};
 our $SHEPHERD_SUBMISSION_OPEN = $config->{"shepherd_submission_open"};
 our $REGISTRATION_OPEN = $config->{"registration_closed"} == 0;
 our $baseUrl = $config->{"url"};
+
+our $debug = $config->{"debug"};
 
 my $script = "gate.cgi";
 
@@ -86,18 +89,6 @@ sub handleSignIn {
 	</table>
 END
 
-		print <<END;
-	<p>Before you can use this site, GDPR compliance requires you to agree to our 
-		<a target="_blank" href="https://docs.google.com/document/d/1PVsyep94_9TpPfrehMkKOUYAX3ZaR7fCQAP6l7squlk/view">privacy policy</a>.</p>
-	<table>
-		<tr>
-			<td><input name="privacy" type="checkbox"/></td>
-			<td width="10"></td>
-			<td>I agree to the privacy policy</td>
-		</tr>
-	</table>
-END
-
 		Format::endForm("Sign in");
 
 		Format::createFreetext(
@@ -126,8 +117,6 @@ sub handleMenu {
 	my $session = $q->param("session");
 	my ($user, $role) = Session::getUserRole($session);
 
-	Assert::assertNotEmpty("privacy", "You need to agree to the privacy policy");
-
 	unless ($user && $role) {
 		Assert::assertNotEmpty("user", "You need to enter a user name");
 		Assert::assertNotEmpty("password", "You need to enter a password");
@@ -147,6 +136,13 @@ sub handleMenu {
 	my %contact = Contact::loadContact($user);
 
 	Format::createHeader("Gate > Menu");
+
+	if ($debug) {
+		my $privacy = Terms::hasAgreedToTerms($user, "privacy");
+		print <<END;
+<p>User ($user) has agreed to the privacy policy: $privacy</p>
+END
+	}
 
 	print <<END;
 <p>Dear $profile{"firstName"}, you are logged into the <a href="$CONFERENCE_WEBSITE">$CONFERENCE</a> submission site as <b>$role</b>.</p>
@@ -202,6 +198,8 @@ sub handleSignUp {
 END
 
 	userProfileFields();
+	privacyPolicy();
+
 	Format::endForm("Sign up");
 
 	print <<END;
@@ -261,6 +259,7 @@ sub handleProfile {
 	$country = $::q->param("country");
 	$password = $::q->param("password");
 	$passwordConfirmed = $::q->param("passwordConfirmed");
+	$privacy = $::q->param("privacy");
 
 	# TODO: check that user name is a single word, which may contain numbers
 
@@ -271,6 +270,14 @@ sub handleProfile {
 	# check whether the passwords match
 	Assert::assertTrue($password eq $passwordConfirmed,
 		"Passwords do not match");
+
+	# check whether user has agreed to the privacy policy
+	Assert::assertTrue($privacy eq "yes", 
+		"To use this site, you need to agree to the privacy policy");
+
+	# save the terms first, because we do not want to create a user, unless saving
+	# the terms succeeds (however unlikely, unless there is a database issue)
+	Terms::addTerms($user, "privacy");
 
 	Password::logUserPassword($user, $password);
 	User::saveUser($user, $firstName, $lastName, $affiliation, $country);
@@ -510,6 +517,21 @@ END
 		<li><a href="shepherd.cgi?action=shepherded_papers&user=$user&role=shepherd&session=$session">View all papers you are shepherding</a></li>
 		<li><a href="shepherd.cgi?action=assignments&session=$session">Screen updated submissions</a></li>
 	</ul>
+END
+}
+
+# Ask user to agree to privacy policy
+sub privacyPolicy {
+	print <<END;
+	<p>Before you can use this site, compliance with article 13 of the EU General Data Protection Regulation (EU-GDPR) requires you to agree to our 
+		<a target="_blank" href="https://docs.google.com/document/d/1PVsyep94_9TpPfrehMkKOUYAX3ZaR7fCQAP6l7squlk/view">privacy policy</a>.</p>
+	<table>
+		<tr>
+			<td><input name="privacy" type="checkbox" value="yes"/></td>
+			<td width="10"></td>
+			<td>I agree to the privacy policy (*)</td>
+		</tr>
+	</table>
 END
 }
 
